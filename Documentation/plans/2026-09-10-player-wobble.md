@@ -792,7 +792,27 @@ namespace HoldMyBeer.Player.Wobble
             DontDestroyOnLoad(_ragdollInstance);
 
             PairBones();
+            IgnoreOwnCharacterController();
             SnapToAnimatedPose();
+        }
+
+        /// <summary>
+        /// The ragdoll must hit the ground but not the CharacterController towing it.
+        /// Both sit on the Default layer, so the collision matrix cannot tell them
+        /// apart — it has to be done per collider pair, per instance.
+        /// </summary>
+        private void IgnoreOwnCharacterController()
+        {
+            var controller = GetComponent<CharacterController>();
+            if (controller == null)
+            {
+                return;
+            }
+
+            foreach (var collider in _ragdollInstance.GetComponentsInChildren<Collider>())
+            {
+                Physics.IgnoreCollision(collider, controller, true);
+            }
         }
 
         public void Teardown()
@@ -1648,3 +1668,42 @@ Volontairement hors périmètre, conformément au spec :
 - **La préhension physique** d'objets, l'escalade.
 - **Les tests.** `WobbleSolver` reste une classe pure pour que ce soit possible sans refactoring le jour venu.
 - **L'anti-triche.** Un owner peut refuser de tomber — même arbitrage que pour sa position, déjà assumé dans `CLAUDE.md`.
+
+---
+
+## Corrections apportées pendant l'exécution
+
+Consignées ici parce qu'elles contredisent le texte des tâches déjà exécutées.
+
+**Tâche 4 — `Physics.IgnoreLayerCollision` ne persiste pas.** C'est une API *runtime* :
+elle modifie la matrice de la session Éditeur en cours et rien d'autre. Vérifié en
+comparant les `md5` de `ProjectSettings/` avant et après : inchangés. Il fallait
+écrire `m_LayerCollisionMatrix` via `SerializedObject`, puis appeler
+`AssetDatabase.SaveAssets()` — sans quoi même la layer créée dans `TagManager.asset`
+restait en mémoire.
+
+**Tâche 4 — les lignes de la matrice sont des `UInt32`.** Premier correctif écrit avec
+`row.intValue &= ~(1 << layer)` : la valeur `-257` a été **clampée à 0**, ce qui faisait
+ignorer *toutes* les layers à `PlayerRagdoll` — le ragdoll serait passé à travers le sol.
+Il faut `row.uintValue = uint.MaxValue & ~(1u << layer)`. Vérifié sur disque :
+`row8 = fffeffff`, et en vivant `GetIgnoreLayerCollision(8,8)=True`, `(8,0)=False`.
+
+**Tâche 4 — la ligne `Physics.IgnoreLayerCollision(layer, 0, false)` était fausse.**
+Son commentaire annonçait d'empêcher la collision avec le `CharacterController`, mais
+`false` l'*active*. Supprimée : ni `true` ni `false` n'est correct ici, parce que le
+sol et le `CharacterController` sont tous deux sur `Default`. Voir la correction de la
+tâche 7 ci-dessous.
+
+**Tâche 7 — collision ragdoll ↔ `CharacterController`.** Impossible à exprimer par
+layer, puisqu'il faut heurter le sol (`Default`) sans heurter le contrôleur (`Default`
+aussi). Réglé par paire de colliders dans `WobbleRig.Build()`, via
+`IgnoreOwnCharacterController()` — ajouté au code de la tâche 7.
+
+**Tâche 5 — `ClampVelocity` utilise `float.IsFinite` et non `float.IsNaN`.** Un solveur
+qui diverge atteint l'infini aussi facilement que le NaN, et un infini empoisonne le rig
+de la même manière.
+
+**Outillage.** Le CLI Unity (`com.unity.pipeline`) a été ajouté au projet : il permet de
+recompiler, lancer les `MenuItem` et lire la console sans passer par l'interface. C'est
+ce qui a permis de détecter les deux bugs de la tâche 4 par la mesure plutôt que par la
+lecture.
