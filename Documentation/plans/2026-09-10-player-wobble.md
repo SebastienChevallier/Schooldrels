@@ -1744,3 +1744,62 @@ de scène `Menu → Game` en cours de partie et une déconnexion à chaud.
 ni locomotion, le rig animé reste en pose de bind, donc l'avatar ballotte en T-pose. Ce
 n'est pas un défaut du wobble, mais ça se voit immédiatement à l'écran et c'est le
 prochain vrai chantier.
+
+## Corrections issues de la revue finale
+
+**BLOQUANT — la conversion d'espace de joint était à moitié écrite.**
+`WobbleBone.MatchAnimatedRotation` faisait `Inverse(animated.localRotation) * startLocalRotation`
+sans la conjugaison par l'espace du joint. Or `PlayerRagdollBuilder` laisse
+`joint.axis` et `joint.secondaryAxis` à leurs valeurs par défaut, pour lesquelles
+`worldToJointSpace = LookRotation(Cross(axis, secondaryAxis), …)` **n'est pas l'identité** :
+l'angle de correction était bon mais son axe tourné de 90°. Au repos exact
+`target == start` donne l'identité quoi qu'il arrive — c'est exactement pourquoi la
+validation en T-pose statique n'a rien vu, et pourquoi le premier clip de locomotion
+aurait produit un personnage tordu qu'on aurait imputé aux réglages de ressort. La forme
+complète, celle de `ConfigurableJointExtensions.SetTargetRotationLocal` d'Unity, est
+désormais appliquée. Le même code fautif figurait dans la tâche 5 de ce plan : le défaut
+était dans la conception écrite, pas dans l'exécution.
+
+**Le bassin n'était jamais protégé.** Il n'a pas de joint, donc il n'est pas un
+`WobbleBone` et `ClampVelocity` ne l'atteignait pas — alors que c'est le seul corps sur
+lequel on empile `AddForce` et `AddTorque` à chaque `FixedUpdate`. Le clamp est extrait
+en `WobbleBone.ClampBody` et appliqué au bassin.
+
+**Le watchdog ne se déclenchait jamais dans le seul cas qui compte.** `drift > seuil²`
+est `false` quand `drift` est NaN. Inversé en `!(drift <= seuil²)`.
+
+**`ProjectToGround` touchait le ragdoll du joueur.** Le rayon part à un mètre au-dessus
+du bassin, donc à l'intérieur du torse couché, et `Physics.IgnoreCollision` n'affecte pas
+les raycasts. Le joueur se relevait 20 à 40 cm en l'air. Masque excluant la layer
+`PlayerRagdoll` ajouté. Vérifié après correction : racine à `y=0.08` au relevé, soit la
+valeur de repos exacte.
+
+**`SnapToAnimatedPose` défaisait son propre travail.** Le bassin était repositionné en
+dernier ; comme le ragdoll est une hiérarchie enracinée sur lui, ce déplacement entraînait
+tous les os qu'on venait de placer. Le bassin passe en premier.
+
+**Le `CharacterController` était réactivé avant la téléportation**, or il fige sa position
+PhysX à l'activation : le déplacement était silencieusement annulé. Ordre inversé.
+
+**Boucle de rétroaction entre traction et suivi de racine.** Pendant l'effondrement la
+racine suit le bassin, et `_animatedPelvis` est enfant de cette racine : le ressort
+poussait le bassin, la racine suivait, la cible remontait d'autant. La fenêtre durait
+~0,25 s à la remontée. `WobbleRig.SetRootSlavedToPelvis` coupe traction et redressement
+tant que la racine est asservie.
+
+**Le snap de pose au relevé est supprimé.** Il contredisait la justification centrale du
+design — laisser les ressorts remonter le corps *est* le relevé. Il produisait un pop de
+la pose couchée vers la pose debout à 25 % de tension.
+
+**Divers.** `slerpDrive` seul est écrit (les joints sont en mode Slerp, PhysX ignore les
+drives par axe) et seulement quand la valeur change, au lieu de 36 reconfigurations par
+joueur et par tick. L'amortissement du redressement n'est plus coupé près de
+l'alignement. `RagdollLayerSetup` fait `&=` au lieu de `=` sur la ligne de matrice, pour
+ne plus écraser d'éventuelles exclusions voulues.
+
+**Signalés, non corrigés, à ton arbitrage :** `SetHeadVisible` met à l'échelle 1e-4 un os
+qui porte un collider et un joint, donc la simulation locale de l'owner diverge un peu de
+celle que voient les autres ; les 13 corps sont en `ContinuousDynamic`, cher pour des os
+de ragdoll ; le rig animé garde ses `SkinnedMeshRenderer` désactivés plutôt que supprimés,
+contrairement à ce qu'annonce le design ; et rien ne limite la fréquence des
+`RequestCollapseRpc` qu'un owner peut envoyer.
