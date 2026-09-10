@@ -96,8 +96,11 @@ namespace HoldMyBeer.Editor
             // The rows are UInt32. Writing them through intValue clamps any value with
             // the sign bit set down to 0, which would make the layer collide with
             // nothing at all and drop the ragdoll through the floor.
+            // Cleared, not overwritten: assigning uint.MaxValue would re-enable every
+            // other exclusion someone has deliberately set on this layer, silently,
+            // on every asset regeneration.
             var row = matrix.GetArrayElementAtIndex(layer);
-            row.uintValue = uint.MaxValue & ~(1u << layer);
+            row.uintValue &= ~(1u << layer);
             dynamicsManager.ApplyModifiedPropertiesWithoutUndo();
 
             Physics.IgnoreLayerCollision(layer, layer, true);

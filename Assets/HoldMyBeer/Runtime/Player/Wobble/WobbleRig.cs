@@ -25,6 +25,7 @@ namespace HoldMyBeer.Player.Wobble
         private Transform _animatedPelvis;
         private Transform _ragdollHead;
         private float _targetTension = 1f;
+        private bool _rootSlavedToPelvis;
 
         public bool IsBuilt => _ragdollInstance != null;
         public float Tension => _solver?.Tension ?? 1f;
@@ -34,6 +35,17 @@ namespace HoldMyBeer.Player.Wobble
         public void SetTargetTension(float tension)
         {
             _targetTension = Mathf.Clamp01(tension);
+        }
+
+        /// <summary>
+        /// Told by <see cref="PlayerRagdollState"/> when the root has been handed over
+        /// to the pelvis. While that holds, the towing spring must stay off: the
+        /// animated pelvis it pulls towards is a child of the very root the pelvis is
+        /// driving, so the two would push each other into the air.
+        /// </summary>
+        public void SetRootSlavedToPelvis(bool slaved)
+        {
+            _rootSlavedToPelvis = slaved;
         }
 
         /// <summary>
@@ -91,17 +103,22 @@ namespace HoldMyBeer.Player.Wobble
 
         public void SnapToAnimatedPose()
         {
-            foreach (var bone in _bones)
-            {
-                bone.SnapToAnimated();
-            }
-
+            // The pelvis first, and not as an afterthought: the ragdoll is a Transform
+            // hierarchy rooted at it, so moving it afterwards would drag every bone we
+            // just placed by the pelvis delta and undo the whole snap.
             if (_pelvis != null && _animatedPelvis != null)
             {
                 _pelvis.position = _animatedPelvis.position;
                 _pelvis.rotation = _animatedPelvis.rotation;
+                _pelvis.transform.SetPositionAndRotation(
+                    _animatedPelvis.position, _animatedPelvis.rotation);
                 _pelvis.linearVelocity = Vector3.zero;
                 _pelvis.angularVelocity = Vector3.zero;
+            }
+
+            foreach (var bone in _bones)
+            {
+                bone.SnapToAnimated();
             }
         }
 
@@ -162,8 +179,8 @@ namespace HoldMyBeer.Player.Wobble
 
         /// <summary>
         /// The ragdoll must hit the ground but not the CharacterController towing it.
-        /// Both sit on the Default layer, so the collision matrix cannot tell them
-        /// apart — it has to be done per collider pair, per instance.
+        /// Those two share the Default layer, so no collision-matrix row can separate
+        /// them — it has to be done per collider pair, per instance.
         /// </summary>
         private void IgnoreOwnCharacterController()
         {
@@ -197,6 +214,11 @@ namespace HoldMyBeer.Player.Wobble
                 bone.ClampVelocity(settings.MaxBoneSpeed, settings.MaxBoneAngularSpeed);
             }
 
+            // The pelvis has no joint, so it is not a WobbleBone and would otherwise be
+            // the one body never clamped — while being the only one we push directly.
+            WobbleBone.ClampBody(_pelvis, settings.MaxBoneSpeed, settings.MaxBoneAngularSpeed,
+                SnapToAnimatedPose);
+
             TowPelvis(tension);
             UprightPelvis(tension);
             RunWatchdog();
@@ -208,7 +230,7 @@ namespace HoldMyBeer.Player.Wobble
         /// </summary>
         private void TowPelvis(float tension)
         {
-            if (tension <= 0f || _animatedPelvis == null)
+            if (tension <= 0f || _rootSlavedToPelvis || _animatedPelvis == null)
             {
                 return;
             }
@@ -229,7 +251,7 @@ namespace HoldMyBeer.Player.Wobble
         /// </summary>
         private void UprightPelvis(float tension)
         {
-            if (tension <= 0f || _animatedPelvis == null)
+            if (tension <= 0f || _rootSlavedToPelvis || _animatedPelvis == null)
             {
                 return;
             }
@@ -244,13 +266,20 @@ namespace HoldMyBeer.Player.Wobble
                 angle -= 360f;
             }
 
-            if (Mathf.Abs(angle) < 0.01f || !float.IsFinite(axis.sqrMagnitude))
+            // Damping is applied even when the spring term is dropped: cutting both
+            // near alignment leaves the pelvis free to coast through the target and
+            // oscillate around it forever.
+            var damping = -_pelvis.angularVelocity * (settings.PelvisUprightDamper * tension);
+
+            if (Mathf.Abs(angle) < 0.01f || !float.IsFinite(angle) ||
+                !float.IsFinite(axis.sqrMagnitude))
             {
+                _pelvis.AddTorque(damping, ForceMode.Acceleration);
                 return;
             }
 
             var torque = axis.normalized * (angle * Mathf.Deg2Rad * settings.PelvisUprightSpring * tension)
-                         - _pelvis.angularVelocity * (settings.PelvisUprightDamper * tension);
+                         + damping;
 
             _pelvis.AddTorque(torque, ForceMode.Acceleration);
         }
@@ -259,8 +288,11 @@ namespace HoldMyBeer.Player.Wobble
         {
             // This will happen: a scene load, a timeScale of 0, a paused debugger.
             // Without the resnap the only recourse is restarting the match.
+            // Negated rather than written as a plain greater-than: a NaN drift fails
+            // every comparison, so `drift > threshold` would stay false in the one
+            // case the watchdog exists for.
             var drift = (_pelvis.position - transform.position).sqrMagnitude;
-            if (drift > settings.WatchdogDistance * settings.WatchdogDistance)
+            if (!(drift <= settings.WatchdogDistance * settings.WatchdogDistance))
             {
                 SnapToAnimatedPose();
             }

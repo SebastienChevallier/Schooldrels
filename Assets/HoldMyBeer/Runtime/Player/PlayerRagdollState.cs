@@ -10,10 +10,15 @@ namespace HoldMyBeer.Player
     /// the target tension crosses the wire.
     /// </summary>
     [RequireComponent(typeof(WobbleRig))]
+    [RequireComponent(typeof(PlayerController))]
     [RequireComponent(typeof(NetworkObject))]
     public sealed class PlayerRagdollState : NetworkBehaviour
     {
+        private const string RagdollLayerName = "PlayerRagdoll";
+
         [SerializeField] private float automaticRecoveryDelay = 2f;
+
+        private int _groundMask = ~0;
 
         private readonly NetworkVariable<float> _targetTension = new(
             1f,
@@ -31,6 +36,12 @@ namespace HoldMyBeer.Player
         {
             _rig = GetComponent<WobbleRig>();
             _controller = GetComponent<PlayerController>();
+
+            // The ground ray starts a metre above the pelvis, which puts it inside the
+            // collapsed body: without this mask it hits the avatar's own chest and
+            // stands the player up in mid-air. IgnoreCollision does not affect raycasts.
+            var ragdollLayer = LayerMask.NameToLayer(RagdollLayerName);
+            _groundMask = ragdollLayer >= 0 ? ~(1 << ragdollLayer) : ~0;
         }
 
         public override void OnNetworkSpawn()
@@ -120,14 +131,24 @@ namespace HoldMyBeer.Player
             if (shouldFollow != _rootFollowsRagdoll)
             {
                 _rootFollowsRagdoll = shouldFollow;
-                _controller.SetMotorSuspended(shouldFollow);
+                _rig.SetRootSlavedToPelvis(shouldFollow);
 
-                if (!shouldFollow)
+                if (shouldFollow)
                 {
-                    // Recovering: drop the root onto the ground under the pelvis
-                    // before the CharacterController takes over again.
+                    _controller.SetMotorSuspended(true);
+                }
+                else
+                {
+                    // Order matters: the CharacterController latches its PhysX position
+                    // when it is enabled, so the root has to be moved while it is still
+                    // off or the teleport is silently undone.
                     transform.position = ProjectToGround(_rig.PelvisPosition);
-                    _rig.SnapToAnimatedPose();
+                    _controller.SetMotorSuspended(false);
+
+                    // No pose snap here on purpose. Letting the springs pull the body
+                    // back up IS the get-up, and it is the whole reason the design
+                    // picked a single tension: snapping would pop the avatar upright
+                    // while it is still 75% limp.
                     return;
                 }
             }
@@ -143,9 +164,10 @@ namespace HoldMyBeer.Player
             _rig.SetTargetTension(current);
         }
 
-        private static Vector3 ProjectToGround(Vector3 origin)
+        private Vector3 ProjectToGround(Vector3 origin)
         {
-            return Physics.Raycast(origin + Vector3.up, Vector3.down, out var hit, 5f)
+            return Physics.Raycast(origin + Vector3.up, Vector3.down, out var hit, 5f,
+                       _groundMask, QueryTriggerInteraction.Ignore)
                 ? hit.point
                 : origin;
         }
