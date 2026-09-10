@@ -1707,3 +1707,40 @@ de la même manière.
 recompiler, lancer les `MenuItem` et lire la console sans passer par l'interface. C'est
 ce qui a permis de détecter les deux bugs de la tâche 4 par la mesure plutôt que par la
 lecture.
+
+**Tâche 7 — il manquait un couple de redressement du bassin.** Le spec prévoyait un
+ressort de *position* pour le bassin et aucun ressort de *rotation*. Résultat mesuré en
+Play mode : la position était suivie à 6 cm près, mais le bassin tombait à un tangage de
+78°, l'avatar restait couché face contre terre, et la sonde affichait pourtant
+`tension=1.00, collapsed=False`. La cause est structurelle — les `ConfigurableJoint` ne
+contraignent que les rotations *relatives* entre os, donc un corps parfaitement posé mais
+couché à plat satisfait chacun d'eux. Ajout de `UprightPelvis()` : un couple vers
+`_animatedPelvis.rotation`, modulé par la tension pour que l'effondrement reste mou.
+
+**Tâche 14 — premiers gains réglés à la mesure.** `springAtFullTension` 800 → 3000,
+`maxForce` 1500 → 20000, `damper` 30 → 120, `pelvisUprightSpring` → 1500,
+`pelvisUprightDamper` → 90. Avec les valeurs d'origine, l'erreur de tangage du bassin
+restait à 43° même après l'ajout du couple. Mesuré après : 6°, tête à 1,62 pour une
+cible de 1,68, soit un léger avachissement — le ressenti visé.
+
+## Validation effectuée
+
+Pilotée par le CLI Unity, en Play mode, en session hôte (transport Steam) :
+
+| Étape | Mesure |
+|---|---|
+| Repos | `tension=1.00`, bassin physique à 6 cm et 6° du bassin animé, tête à 1,62 |
+| Effondrement | `tension=0.00`, `collapsed=True`, `CharacterController` désactivé, racine confondue avec le bassin, tête à 0,17 |
+| Relevé | `tension=1.00`, `CharacterController` réactivé, racine reposée au sol sous le corps, tête à 1,62 |
+
+Console vierge sur tout le cycle. Aucun ragdoll orphelin.
+
+**Non validé, et à faire par toi :** le test à deux clients. Tout ce qui précède a été
+mesuré chez l'hôte, qui a 0 ms de latence — `CLAUDE.md` interdit de s'en contenter, et
+c'est particulièrement vrai pour du ballottement. Restent aussi à valider un changement
+de scène `Menu → Game` en cours de partie et une déconnexion à chaud.
+
+**Contenu d'animation manquant.** `AC_Player` ne contient qu'un clip « Grab » : sans idle
+ni locomotion, le rig animé reste en pose de bind, donc l'avatar ballotte en T-pose. Ce
+n'est pas un défaut du wobble, mais ça se voit immédiatement à l'écran et c'est le
+prochain vrai chantier.
