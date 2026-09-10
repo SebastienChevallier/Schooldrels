@@ -137,6 +137,8 @@ GameObject:
   - component: {fileID: 936085054796933374}
   - component: {fileID: 1026766994526957016}
   - component: {fileID: 6260207762719212848}
+  - component: {fileID: 4824284488807518293}
+  - component: {fileID: 4429776244827522130}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -198,7 +200,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1605545078
+  GlobalObjectIdHash: 4114330748
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -275,7 +277,6 @@ MonoBehaviour:
   cameraPivot: {fileID: 4559842912633232424}
   playerCamera: {fileID: 6538372947225560679}
   playerAudioListener: {fileID: 6129894051231251913}
-  firstPersonHiddenVisual: {fileID: 4956341144743719124}
   settings:
     walkSpeed: 5
     sprintSpeed: 8
@@ -283,6 +284,50 @@ MonoBehaviour:
     gravity: -19.62
     lookSensitivity: 12
     maxPitch: 85
+    collapseImpactSpeed: 12
+--- !u!114 &4824284488807518293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2333332092169759779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39ba42c7e062d894b974752bd79b13b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleRig
+  ragdollPrefab: {fileID: 4626503734970933764, guid: a5ccacdef1193fe4c84fc065427705f7, type: 3}
+  animatedRigRoot: {fileID: 5729606419291466350}
+  settings:
+    idleTension: 1
+    springAtFullTension: 3000
+    damper: 120
+    maxForce: 20000
+    collapseDuration: 0.2
+    recoverDuration: 1
+    pelvisFollowSpring: 900
+    pelvisFollowDamper: 45
+    pelvisUprightSpring: 1500
+    pelvisUprightDamper: 90
+    maxBoneSpeed: 30
+    maxBoneAngularSpeed: 25
+    watchdogDistance: 6
+    collapseTensionThreshold: 0.25
+--- !u!114 &4429776244827522130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2333332092169759779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f36f77c48b6c045a7bf3e8a06b80b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.PlayerRagdollState
+  ShowTopMostFoldoutHeaderGroup: 1
+  automaticRecoveryDelay: 2
 --- !u!1001 &5190715036654833029
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -331,9 +376,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7813590141776298306, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
       propertyPath: m_Name
       value: AnimatedRig
+      objectReference: {fileID: 0}
+    - target: {fileID: 5822821947120931875, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
       propertyPath: m_Controller
@@ -352,11 +405,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
---- !u!1 &4956341144743719124 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
-  m_PrefabInstance: {fileID: 5190715036654833029}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5729606419291466350 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}

@@ -15,19 +15,21 @@ namespace HoldMyBeer.Player
         [SerializeField] private Transform cameraPivot;
         [SerializeField] private Camera playerCamera;
         [SerializeField] private AudioListener playerAudioListener;
-        [SerializeField] private GameObject firstPersonHiddenVisual;
         [SerializeField] private PlayerMovementSettings settings = PlayerMovementSettings.Default;
 
         private CharacterController _controller;
         private FirstPersonMotor _motor;
         private IPlayerInputSource _input;
+        private PlayerRagdollState _ragdollState;
         private float _pitch;
+        private bool _motorSuspended;
 
         private void Awake()
         {
             _controller = GetComponent<CharacterController>();
             _motor = new FirstPersonMotor(_controller, settings);
             _input = new KeyboardMousePlayerInputSource(settings.LookSensitivity);
+            _ragdollState = GetComponent<PlayerRagdollState>();
 
             SetLocalRigActive(false);
             enabled = false;
@@ -41,14 +43,6 @@ namespace HoldMyBeer.Player
             }
 
             SetLocalRigActive(true);
-
-            // Only the owner sees through this camera; hide the body so it does not
-            // fill the near plane.
-            if (firstPersonHiddenVisual != null)
-            {
-                firstPersonHiddenVisual.SetActive(false);
-            }
-
             SetCursorLocked(true);
             enabled = true;
         }
@@ -61,6 +55,23 @@ namespace HoldMyBeer.Player
             }
 
             enabled = false;
+        }
+
+        /// <summary>
+        /// Hands control of the root over to the ragdoll (or takes it back). Called
+        /// by <see cref="PlayerRagdollState"/> when the tension crosses the collapse
+        /// threshold; the CharacterController and the physics body must never drive
+        /// the same transform at once.
+        /// </summary>
+        public void SetMotorSuspended(bool suspended)
+        {
+            if (_motorSuspended == suspended)
+            {
+                return;
+            }
+
+            _motorSuspended = suspended;
+            _controller.enabled = !suspended;
         }
 
         private void Update()
@@ -76,12 +87,25 @@ namespace HoldMyBeer.Player
                 SetCursorLocked(Cursor.lockState != CursorLockMode.Locked);
             }
 
+            // Looking around stays available while collapsed: losing the camera on top
+            // of losing control of the body is disorienting rather than funny.
             if (Cursor.lockState == CursorLockMode.Locked)
             {
                 ApplyLook(_input.Look);
             }
 
+            if (_motorSuspended)
+            {
+                return;
+            }
+
             _motor.Tick(_input.Move, _input.SprintHeld, _input.JumpPressedThisFrame, Time.deltaTime);
+
+            if (_ragdollState != null &&
+                _motor.LandingImpactSpeed > settings.CollapseImpactSpeed)
+            {
+                _ragdollState.RequestCollapseRpc();
+            }
         }
 
         private void ApplyLook(Vector2 look)

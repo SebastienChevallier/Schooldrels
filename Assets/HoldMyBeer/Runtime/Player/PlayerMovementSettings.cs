@@ -12,6 +12,7 @@ namespace HoldMyBeer.Player
         [SerializeField] private float gravity;
         [SerializeField] private float lookSensitivity;
         [SerializeField] private float maxPitch;
+        [SerializeField] private float collapseImpactSpeed;
 
         public float WalkSpeed => walkSpeed;
         public float SprintSpeed => sprintSpeed;
@@ -20,6 +21,9 @@ namespace HoldMyBeer.Player
         public float LookSensitivity => lookSensitivity;
         public float MaxPitch => maxPitch;
 
+        /// <summary>Landing faster than this drops the player into a ragdoll.</summary>
+        public float CollapseImpactSpeed => collapseImpactSpeed;
+
         public static PlayerMovementSettings Default => new()
         {
             walkSpeed = 5f,
@@ -27,7 +31,8 @@ namespace HoldMyBeer.Player
             jumpHeight = 1.2f,
             gravity = -19.62f,
             lookSensitivity = 12f,
-            maxPitch = 85f
+            maxPitch = 85f,
+            collapseImpactSpeed = 12f
         };
     }
 }

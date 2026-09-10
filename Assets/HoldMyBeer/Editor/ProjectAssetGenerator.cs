@@ -5,6 +5,7 @@ using HoldMyBeer.Core;
 using HoldMyBeer.Gameplay;
 using HoldMyBeer.Networking;
 using HoldMyBeer.Player;
+using HoldMyBeer.Player.Wobble;
 using HoldMyBeer.UI;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
@@ -44,7 +45,10 @@ namespace HoldMyBeer.Editor
         {
             EnsureFolders();
 
-            var playerPrefab = CreatePlayerPrefab();
+            // Built first: the player prefab holds a reference to it.
+            var ragdollPrefab = PlayerRagdollBuilder.Build();
+
+            var playerPrefab = CreatePlayerPrefab(ragdollPrefab);
             var lobbyPrefab = CreateLobbyPrefab();
             var prefabsList = CreateNetworkPrefabsList(playerPrefab, lobbyPrefab);
 
@@ -96,7 +100,7 @@ namespace HoldMyBeer.Editor
 
         // ------------------------------------------------------------------ prefabs
 
-        private static GameObject CreatePlayerPrefab()
+        private static GameObject CreatePlayerPrefab(GameObject ragdollPrefab)
         {
             var root = new GameObject("Player");
 
@@ -139,6 +143,13 @@ namespace HoldMyBeer.Editor
                 AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(PlayerAnimatorPath);
             animator.applyRootMotion = false;
 
+            // The animated rig is a pose source, not something to look at: the
+            // visible mesh lives on the physical ragdoll.
+            foreach (var rigRenderer in animatedRig.GetComponentsInChildren<Renderer>(true))
+            {
+                rigRenderer.enabled = false;
+            }
+
             var pivot = new GameObject("CameraPivot");
             pivot.transform.SetParent(root.transform, false);
             pivot.transform.localPosition = new Vector3(0f, 1.7f, 0f);
@@ -159,8 +170,15 @@ namespace HoldMyBeer.Editor
             serialized.FindProperty("cameraPivot").objectReferenceValue = pivot.transform;
             serialized.FindProperty("playerCamera").objectReferenceValue = camera;
             serialized.FindProperty("playerAudioListener").objectReferenceValue = audioListener;
-            serialized.FindProperty("firstPersonHiddenVisual").objectReferenceValue = animatedRig;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var wobbleRig = root.AddComponent<WobbleRig>();
+            var wobbleSerialized = new SerializedObject(wobbleRig);
+            wobbleSerialized.FindProperty("ragdollPrefab").objectReferenceValue = ragdollPrefab;
+            wobbleSerialized.FindProperty("animatedRigRoot").objectReferenceValue = animatedRig.transform;
+            wobbleSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            root.AddComponent<PlayerRagdollState>();
 
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
             Object.DestroyImmediate(root);
