@@ -33,6 +33,10 @@ namespace HoldMyBeer.Editor
         private const string LobbyPrefabPath = PrefabsFolder + "/LobbyState.prefab";
         private const string NetworkPrefabsListPath = PrefabsFolder + "/HoldMyBeerNetworkPrefabs.asset";
 
+        private const string ArtFolder = Root + "/_ART/Player";
+        private const string PlayerModelPath = ArtFolder + "/Models/Y Bot.fbx";
+        private const string PlayerAnimatorPath = ArtFolder + "/AC_Player.controller";
+
         private const int MaxPlayers = 8;
 
         [MenuItem("Tools/Hold My Beer/Generate Project Assets", priority = 0)]
@@ -110,12 +114,30 @@ namespace HoldMyBeer.Editor
             networkTransform.InLocalSpace = false;
             networkTransform.Interpolate = true;
 
-            // Visual body, hidden for the owner so it does not block the camera.
-            var visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            visual.name = "Visual";
-            visual.transform.SetParent(root.transform, false);
-            visual.transform.localPosition = new Vector3(0f, 1f, 0f);
-            Object.DestroyImmediate(visual.GetComponent<CapsuleCollider>());
+            // The animated rig drives the pose; the physical ragdoll will follow it
+            // later. Keeping them apart is what stops the Animator and physics from
+            // fighting over the same Transforms.
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerModelPath);
+            if (model == null)
+            {
+                throw new FileNotFoundException(
+                    $"Player model not found at '{PlayerModelPath}'. " +
+                    "Re-import the Y Bot FBX before generating assets.");
+            }
+
+            var animatedRig = (GameObject)PrefabUtility.InstantiatePrefab(model);
+            animatedRig.name = "AnimatedRig";
+            animatedRig.transform.SetParent(root.transform, false);
+
+            var animator = animatedRig.GetComponent<Animator>();
+            if (animator == null)
+            {
+                animator = animatedRig.AddComponent<Animator>();
+            }
+
+            animator.runtimeAnimatorController =
+                AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(PlayerAnimatorPath);
+            animator.applyRootMotion = false;
 
             var pivot = new GameObject("CameraPivot");
             pivot.transform.SetParent(root.transform, false);
@@ -137,7 +159,7 @@ namespace HoldMyBeer.Editor
             serialized.FindProperty("cameraPivot").objectReferenceValue = pivot.transform;
             serialized.FindProperty("playerCamera").objectReferenceValue = camera;
             serialized.FindProperty("playerAudioListener").objectReferenceValue = audioListener;
-            serialized.FindProperty("firstPersonHiddenVisual").objectReferenceValue = visual;
+            serialized.FindProperty("firstPersonHiddenVisual").objectReferenceValue = animatedRig;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
