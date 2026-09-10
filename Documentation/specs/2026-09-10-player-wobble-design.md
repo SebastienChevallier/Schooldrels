@@ -77,11 +77,12 @@ modifier : `HoldMyBeer.Editor` référence déjà `HoldMyBeer.Player`.
 | `WobbleBone` | classe | un os physique ; **seul** endroit qui touche l'API `ConfigurableJoint` |
 | `WobbleRig` | `MonoBehaviour` | possède les os, applique la tension reçue ; ne décide de rien, ignore le réseau |
 | `PlayerRagdollState` | `NetworkBehaviour` | `NetworkVariable<float>` de tension, `CollapseRpc` ; seul fichier de la feature qui connaît NGO |
-| `WobbleRigBuilder` | éditeur | génère rigidbodies, colliders et joints depuis les noms d'os Mixamo |
+| `PlayerRagdollBuilder` | éditeur | génère rigidbodies, colliders et joints depuis les noms d'os Mixamo |
 
 `WobbleSettings` expose : `idleTension`, `springAtFullTension`, `damper`,
-`maxForce`, `collapseDuration`, `recoverDuration`, `accelerationInfluence`, avec
-un `Default` statique éditable par variante de prefab.
+`maxForce`, `collapseDuration`, `recoverDuration`, `pelvisFollowSpring`,
+`pelvisFollowDamper`, `maxBoneSpeed`, `maxBoneAngularSpeed`, `watchdogDistance`,
+`collapseTensionThreshold`, avec un `Default` statique éditable par variante de prefab.
 
 Sens de dépendance : `PlayerRagdollState` → `WobbleRig` → `WobbleBone` → Unity
 Physics, avec `WobbleSolver` isolé sur le côté. Rien ne remonte. `WobbleRig` est
@@ -90,7 +91,7 @@ utilisable sans réseau, donc jouable dans une scène vide.
 `WobbleSolver` est une classe pure pour la même raison que `FirstPersonMotor` :
 le jour où le mouvement passe en autorité serveur, elle ne bouge pas.
 
-`WobbleRigBuilder` s'ajoute à côté de `ProjectAssetGenerator`, sous une entrée
+`PlayerRagdollBuilder` s'ajoute à côté de `ProjectAssetGenerator`, sous une entrée
 `Tools > Hold My Beer > Rebuild Player Ragdoll`. Le Ragdoll Wizard d'Unity fait
 l'essentiel du travail, mais à la main et sans reproductibilité — or ce projet a
 pour règle que ses assets se régénèrent.
@@ -148,8 +149,9 @@ position. Il n'y a pas de raison d'être plus strict ici que sur la position.
   physique. Sinon le ragdoll naît à l'origine du monde et se fait catapulter au
   premier `FixedUpdate`. Concrètement : `PlayerSpawner` doit positionner le
   `Player` **avant** d'appeler `Spawn()`, pour qu'`OnNetworkSpawn` voie déjà la
-  bonne position. Si l'ordre actuel ne le garantit pas, il faut le corriger là —
-  pas contourner en différant la création du rig d'un frame.
+  bonne position. **Vérifié : c'est déjà le cas** — `PlayerSpawner` fait
+  `Instantiate(prefab, pose.position, pose.rotation)` avant `SpawnAsPlayerObject()`.
+  Rien à corriger, mais la contrainte est à préserver si ce code évolue.
 
 À `tension = 0`, l'`AnimatedRig` continue de tourner dans le vide : la physique
 l'ignore, puisque les drives sont à zéro. C'est voulu — c'est ce qui rend le
@@ -162,7 +164,7 @@ relevé gratuit, la pose cible est déjà là quand la tension remonte.
 - **Watchdog** : si la distance bassin ↔ racine dépasse un seuil, resnap sur la
   pose animée. Ça arrivera — changement de scène, `timeScale` à 0, pause
   debugger. Sans watchdog, le seul recours est de relancer la partie.
-- **Échec bruyant en éditeur** : si `WobbleRigBuilder` ne trouve pas un os attendu
+- **Échec bruyant en éditeur** : si `PlayerRagdollBuilder` ne trouve pas un os attendu
   (rig renommé, Mixamo réexporté), il s'arrête en nommant l'os manquant, au build
   du prefab et non au runtime. Même logique que les scènes qui signalent
   l'absence de bootstrap dans la console.
