@@ -106,7 +106,10 @@ Le code de jeu **ne sait pas** lequel est actif : il ne parle qu'à `INetworkSes
       ┌───────────┘   │   │   └────────────┐
       ▼               ▼   ▼                ▼
 HoldMyBeer.UI   HoldMyBeer.Gameplay   HoldMyBeer.Player
-      │               │
+      │               │   │                 │
+      │               │   └─────────┬───────┘
+      │               │             ▼
+      │               │    HoldMyBeer.Interaction  ← contrats seuls, ni NGO ni MonoBehaviour
       └───────┬───────┘
               ▼
      HoldMyBeer.Networking ──► HoldMyBeer.Networking.Relay (optionnel, supprimable)
@@ -242,6 +245,28 @@ spawne pour des clients qui n'ont pas encore la scène.
 **Une nouvelle règle d'entrée** → une classe `IConnectionApprovalPolicy`, ajoutée dans
 `GameBootstrapper.BuildContainer()`.
 
+**Une nouvelle interaction contextuelle** (viser une tireuse avec un verre vide le
+remplit, viser un évier le vide…) → une classe `IInteractionRule`, ajoutée dans
+`GameBootstrapper.BuildContainer()` **entre `GrabRule` et `ThrowRule`**.
+
+```csharp
+public sealed class FillGlassRule : IInteractionRule
+{
+    // Pur : tourne aussi sur le client, pour l'invite à l'écran. Aucun effet de bord.
+    public bool CanApply(in InteractionRequest request, out string prompt)
+    {
+        prompt = "Remplir";
+        return request.HeldItem is EmptyGlass && request.AimedTarget is BeerTap { IsAvailable: true };
+    }
+
+    // Serveur seul. Le contexte est la seule porte de sortie : pas de NetworkManager ici.
+    public void Apply(in InteractionRequest request, IInteractionContext context) { /* … */ }
+}
+```
+
+L'ordre **est** la priorité. `ThrowRule` accepte tout dès qu'on tient un objet : une
+règle enregistrée après elle ne s'exécutera jamais. Il n'y a rien pour t'en avertir.
+
 **Un objet de jeu répliqué** → prefab + `NetworkObject`, ajouté à la
 `NetworkPrefabsList`, spawné **par le serveur** avec `.Spawn()`.
 
@@ -278,13 +303,27 @@ spawne pour des clients qui n'ont pas encore la scène.
 | `FixedString32Bytes` non résolu | l'assembly qui lit un champ répliqué doit référencer `Unity.Collections` | ajouté aux `.asmdef` concernés |
 | API Relay introuvable (`AllocationUtils`, `RelayServerData`) | ces helpers bougent d'une version de transport à l'autre | `SetRelayServerData` en octets bruts, stable depuis NGO 1.x |
 | `manifest.json` : *Duplicate key found* | le fichier a été réordonné à la main, puis le Package Manager a réécrit **son** bloc sans reconnaître l'ancien | ne jamais retrier `manifest.json` : éditer une valeur sur place, laisser l'ordre d'Unity |
+| L'avatar reste couché alors que la tension vaut 1 | les joints ne contraignent que les rotations *relatives* : un corps posé mais à plat les satisfait tous | couple de redressement du bassin dans `WobbleRig.UprightPelvis` |
+| Le personnage est tordu en permanence | `ConfigurableJoint.targetRotation` s'exprime dans l'espace du joint, pas en local ; au repos la conversion vaut l'identité, donc le bug n'apparaît qu'une fois une animation jouée | conjugaison complète dans `WobbleBone` |
+| Un réglage de `Physics` ou de layer disparaît au redémarrage | `Physics.IgnoreLayerCollision` est une API *runtime* et n'écrit pas dans `ProjectSettings` | `RagdollLayerSetup` écrit `m_LayerCollisionMatrix` via `SerializedObject` + `AssetDatabase.SaveAssets()` |
+| Une ligne de matrice de collision passe à 0 | ses cases sont des `UInt32` ; écrire une valeur négative via `intValue` la clampe à 0 | utiliser `uintValue` |
+| L'IK des mains ne bouge rien, sans aucun message | `AnimatorCullingMode.CullUpdateTransforms` coupe l'IK quand aucun renderer n'est visible — or le rig animé n'en a aucun | `cullingMode = AlwaysAnimate` dans le générateur |
+| Les buts IK sont ignorés | l'IK Pass n'est pas activée sur la couche de l'`AnimatorController` | activée par code dans `ProjectAssetGenerator` |
+| Le personnage s'écrase au sol dès qu'on réveille l'Animator | l'état par défaut n'a **pas** de motion, et un Animator humanoïde y écrit une pose à zéro | `EnsureDefaultStateHasMotion` génère un idle de repli et le signale en warning |
 
 ---
 
 ## 8. État actuel et limites assumées
 
 Fait : boot, menu, lobby répliqué avec ready/start, chargement réseau de la scène de
-jeu, spawn des joueurs, contrôleur FPS, Direct IP + Relay.
+jeu, spawn des joueurs, contrôleur FPS, Direct IP + Relay + Steam, ragdoll passif à
+tension unique avec effondrement et relevé, mains en IK, objets attrapables et
+lançables, registre d'interactions contextuelles.
+
+Manque de contenu, pas de code : `AC_Player` n'a ni idle ni locomotion. Un idle de
+repli est généré (`_ART/Player/Animation/IdleFallback.anim`) pour que le rig ne
+s'écrase pas ; il est à remplacer par de vraies animations, et le ragdoll copiera
+fidèlement ce qu'on lui donnera.
 
 Non fait (volontairement) : host migration, reconnexion, voix, anti-triche,
 persistance, interpolation avancée, UI en prefabs (l'UI est construite par code, voir
