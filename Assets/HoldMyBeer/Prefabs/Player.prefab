@@ -139,6 +139,8 @@ GameObject:
   - component: {fileID: 6260207762719212848}
   - component: {fileID: 4824284488807518293}
   - component: {fileID: 4429776244827522130}
+  - component: {fileID: 332166430031694956}
+  - component: {fileID: 3373257258724891178}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -200,7 +202,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 389127885
+  GlobalObjectIdHash: 1354069256
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -328,6 +330,46 @@ MonoBehaviour:
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.PlayerRagdollState
   ShowTopMostFoldoutHeaderGroup: 1
   automaticRecoveryDelay: 2
+--- !u!114 &332166430031694956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2333332092169759779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24b5c11172b08294abe30877e88c446d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Hands.PlayerHands
+  cameraPivot: {fileID: 4559842912633232424}
+  wobbleRig: {fileID: 4824284488807518293}
+  ikDriver: {fileID: 2741264147316404150}
+  settings:
+    restOffset: {x: 0.28, y: -0.35, z: 0.45}
+    carryOffset: {x: 0.22, y: -0.25, z: 0.55}
+    restWeight: 0.45
+    carryWeight: 0.9
+    reachWeight: 0.85
+    weightBlendSpeed: 6
+    goalBlendSpeed: 12
+    reachDistance: 2.2
+--- !u!114 &3373257258724891178
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2333332092169759779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4ea162e8822c8e45a32b7f21e91e69c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Hands.PlayerInteractor
+  ShowTopMostFoldoutHeaderGroup: 1
+  cameraPivot: {fileID: 4559842912633232424}
+  playerController: {fileID: 6260207762719212848}
+  aimDistance: 3
 --- !u!1001 &5190715036654833029
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -393,6 +435,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 9100000, guid: 04acdd5e28057cd4685de68a4ee0178d, type: 2}
     - target: {fileID: 5866666021909216657, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
+      propertyPath: m_CullingMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
       propertyPath: m_WarningMessage
       value: "\nBinding warning: Some generic clip(s) animate transforms that are already bound by a Humanoid avatar. These transforms can only be changed by Humanoid clips.\n\tTransform 'mixamorig:Hips'\n\tTransform 'mixamorig:LeftFoot'\n\tTransform 'mixamorig:RightHandRing2'\n\tTransform 'mixamorig:Spine1'\n\tTransform 'mixamorig:RightArm'\n\tTransform 'mixamorig:LeftLeg'\n\tTransform 'mixamorig:LeftShoulder'\n\tTransform 'mixamorig:RightHandRing1'\n\tTransform 'mixamorig:RightHandIndex3'\n\tTransform 'mixamorig:RightFoot'\n\tand more ...\n\tFrom animation clip 'Grab'"
       objectReference: {fileID: 0}
@@ -403,8 +449,28 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2741264147316404150}
   m_SourcePrefab: {fileID: 100100000, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
+--- !u!1 &4956341144743719124 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
+  m_PrefabInstance: {fileID: 5190715036654833029}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2741264147316404150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4956341144743719124}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79197e0ea74a2bf4297f7305fcb120b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Hands.HandIkDriver
 --- !u!4 &5729606419291466350 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}

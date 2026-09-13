@@ -11,7 +11,8 @@
         "Unity.Netcode.Components",
         "Unity.Networking.Transport",
         "HoldMyBeer.App",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "HoldMyBeer.Interaction"
     ],
     "includePlatforms": [
         "Editor"

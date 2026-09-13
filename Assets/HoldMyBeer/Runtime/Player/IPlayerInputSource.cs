@@ -17,5 +17,12 @@ namespace HoldMyBeer.Player
         bool JumpPressedThisFrame { get; }
 
         bool SprintHeld { get; }
+
+        /// <summary>
+        /// The single contextual action. There is no separate grab or throw input:
+        /// what it does is decided by the interaction rules, so the input layer never
+        /// has to learn about new verbs.
+        /// </summary>
+        bool InteractPressedThisFrame { get; }
     }
 }

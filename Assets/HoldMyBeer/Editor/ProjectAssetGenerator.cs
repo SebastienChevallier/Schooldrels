@@ -4,8 +4,12 @@ using HoldMyBeer.App;
 using HoldMyBeer.Core;
 using HoldMyBeer.Gameplay;
 using HoldMyBeer.Networking;
+using HoldMyBeer.Gameplay.Interaction;
 using HoldMyBeer.Player;
+using HoldMyBeer.Player.Hands;
 using HoldMyBeer.Player.Wobble;
+using UnityEditor.Animations;
+using Unity.Netcode.Components;
 using HoldMyBeer.UI;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
@@ -37,6 +41,8 @@ namespace HoldMyBeer.Editor
         private const string ArtFolder = Root + "/_ART/Player";
         private const string PlayerModelPath = ArtFolder + "/Models/Y Bot.fbx";
         private const string PlayerAnimatorPath = ArtFolder + "/AC_Player.controller";
+        private const string GrabbablePrefabPath = PrefabsFolder + "/Grabbable.prefab";
+        private const string FallbackIdleClipPath = ArtFolder + "/Animation/IdleFallback.anim";
 
         private const int MaxPlayers = 8;
 
@@ -50,7 +56,11 @@ namespace HoldMyBeer.Editor
 
             var playerPrefab = CreatePlayerPrefab(ragdollPrefab);
             var lobbyPrefab = CreateLobbyPrefab();
-            var prefabsList = CreateNetworkPrefabsList(playerPrefab, lobbyPrefab);
+            var grabbablePrefab = CreateGrabbablePrefab();
+
+            // The ragdoll is absent on purpose: it is instantiated locally by every
+            // client, never spawned by NGO, so listing it would be wrong.
+            var prefabsList = CreateNetworkPrefabsList(playerPrefab, lobbyPrefab, grabbablePrefab);
 
             CreateBootScene(playerPrefab, lobbyPrefab, prefabsList);
             CreateMenuScene();
@@ -143,6 +153,18 @@ namespace HoldMyBeer.Editor
                 AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(PlayerAnimatorPath);
             animator.applyRootMotion = false;
 
+            // Mandatory here, not a nicety. The default CullUpdateTransforms disables
+            // retargeting, IK and transform writes while no renderer is visible — and
+            // this rig has none, by design, since the ragdoll carries the mesh. Leaving
+            // the default silently kills hand IK with nothing in the console.
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+
+            EnableAnimatorIkPass();
+
+            // OnAnimatorIK only fires on the object carrying the Animator, so the IK
+            // driver has to live here rather than on the player root.
+            var ikDriver = animatedRig.AddComponent<HandIkDriver>();
+
             // The animated rig is a pose source, not something to look at: the
             // visible mesh lives on the physical ragdoll.
             foreach (var rigRenderer in animatedRig.GetComponentsInChildren<Renderer>(true))
@@ -180,7 +202,153 @@ namespace HoldMyBeer.Editor
 
             root.AddComponent<PlayerRagdollState>();
 
+            var hands = root.AddComponent<PlayerHands>();
+            var handsSerialized = new SerializedObject(hands);
+            handsSerialized.FindProperty("cameraPivot").objectReferenceValue = pivot.transform;
+            handsSerialized.FindProperty("wobbleRig").objectReferenceValue = wobbleRig;
+            handsSerialized.FindProperty("ikDriver").objectReferenceValue = ikDriver;
+            handsSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var interactor = root.AddComponent<PlayerInteractor>();
+            var interactorSerialized = new SerializedObject(interactor);
+            interactorSerialized.FindProperty("cameraPivot").objectReferenceValue = pivot.transform;
+            interactorSerialized.FindProperty("playerController").objectReferenceValue = playerController;
+            interactorSerialized.ApplyModifiedPropertiesWithoutUndo();
+
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
+            Object.DestroyImmediate(root);
+            return prefab;
+        }
+
+        /// <summary>
+        /// Humanoid IK goals are ignored unless the layer runs an IK pass. Done here
+        /// rather than by hand so a re-imported controller cannot silently lose it —
+        /// the symptom would be hands that never move, with nothing in the console.
+        /// </summary>
+        private static void EnableAnimatorIkPass()
+        {
+            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(PlayerAnimatorPath);
+            if (controller == null)
+            {
+                Debug.LogWarning(
+                    $"[Hold My Beer] No animator controller at '{PlayerAnimatorPath}'. " +
+                    "Hand IK will not run.");
+                return;
+            }
+
+            var layers = controller.layers;
+            for (var i = 0; i < layers.Length; i++)
+            {
+                layers[i].iKPass = true;
+            }
+
+            controller.layers = layers;
+            EnsureDefaultStateHasMotion(controller);
+            EditorUtility.SetDirty(controller);
+        }
+
+        /// <summary>
+        /// A humanoid Animator sitting in a state with no motion writes a zeroed pose:
+        /// hips at the animator origin, character flat on the floor. That is what the
+        /// ragdoll then faithfully copies. It went unnoticed while the animator was
+        /// culled, because a culled animator writes nothing and the bind pose survived
+        /// by accident.
+        ///
+        /// The generated clip is a placeholder that only fills an EMPTY default state.
+        /// Drop a real idle into that state and this stops touching anything.
+        /// </summary>
+        private static void EnsureDefaultStateHasMotion(AnimatorController controller)
+        {
+            if (controller.layers.Length == 0)
+            {
+                return;
+            }
+
+            var defaultState = controller.layers[0].stateMachine.defaultState;
+            if (defaultState == null || defaultState.motion != null)
+            {
+                return;
+            }
+
+            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(FallbackIdleClipPath);
+            if (clip == null)
+            {
+                clip = new AnimationClip { name = "IdleFallback" };
+
+                // Only the root is keyed. Every muscle left unkeyed stays at 0, which
+                // for a humanoid is a relaxed standing pose — exactly the neutral
+                // target the wobble rig wants to be pulled towards.
+                var height = MeasureBindPoseHipHeight();
+                clip.SetCurve("", typeof(Animator), "RootT.y", AnimationCurve.Constant(0f, 1f, height));
+                clip.SetCurve("", typeof(Animator), "RootQ.w", AnimationCurve.Constant(0f, 1f, 1f));
+
+                var settings = AnimationUtility.GetAnimationClipSettings(clip);
+                settings.loopTime = true;
+                AnimationUtility.SetAnimationClipSettings(clip, settings);
+
+                AssetDatabase.CreateAsset(clip, FallbackIdleClipPath);
+            }
+
+            defaultState.motion = clip;
+
+            Debug.LogWarning(
+                $"[Hold My Beer] '{controller.name}' had no motion on its default state, so a " +
+                $"placeholder idle was generated at '{FallbackIdleClipPath}'. Replace it with a " +
+                "real idle animation — the ragdoll copies this pose.");
+        }
+
+        private static float MeasureBindPoseHipHeight()
+        {
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerModelPath);
+            if (model == null)
+            {
+                return 1f;
+            }
+
+            foreach (var bone in model.GetComponentsInChildren<Transform>(true))
+            {
+                if (bone.name == "mixamorig:Hips")
+                {
+                    return bone.position.y - model.transform.position.y;
+                }
+            }
+
+            return 1f;
+        }
+
+        /// <summary>
+        /// A deliberately plain pick-up-able object. Spawned by NGO, so unlike the
+        /// ragdoll it MUST appear in the network prefabs list.
+        /// </summary>
+        private static GameObject CreateGrabbablePrefab()
+        {
+            var root = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            root.name = "Grabbable";
+            root.transform.localScale = new Vector3(0.12f, 0.1f, 0.12f);
+
+            var body = root.AddComponent<Rigidbody>();
+            body.mass = 0.6f;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
+            body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+
+            root.AddComponent<NetworkObject>();
+
+            var networkTransform = root.AddComponent<NetworkTransform>();
+            networkTransform.InLocalSpace = false;
+            networkTransform.Interpolate = true;
+
+            // Offset from the centre so the object hangs from a point rather than
+            // being skewered through the middle by the palm.
+            var grip = new GameObject("GripAnchor");
+            grip.transform.SetParent(root.transform, false);
+            grip.transform.localPosition = new Vector3(0f, -0.6f, 0f);
+
+            var item = root.AddComponent<GrabbableItem>();
+            var serialized = new SerializedObject(item);
+            serialized.FindProperty("gripAnchor").objectReferenceValue = grip.transform;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var prefab = PrefabUtility.SaveAsPrefabAsset(root, GrabbablePrefabPath);
             Object.DestroyImmediate(root);
             return prefab;
         }
@@ -290,6 +458,12 @@ namespace HoldMyBeer.Editor
 
             spawnRoot.AddComponent<SpawnPointRegistry>();
             new GameObject("GameSceneBootstrap").AddComponent<GameSceneBootstrap>();
+
+            var grabbableSpawner = new GameObject("GrabbableSpawner").AddComponent<GrabbableSpawner>();
+            var spawnerSerialized = new SerializedObject(grabbableSpawner);
+            spawnerSerialized.FindProperty("grabbablePrefab").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<GameObject>(GrabbablePrefabPath);
+            spawnerSerialized.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath(SceneNames.Game));
         }

@@ -67,7 +67,14 @@ namespace HoldMyBeer.Editor
             BoneSpec.Capsule("mixamorig:LeftArm", "mixamorig:Spine1", 2.5f, 0.06f),
             BoneSpec.Capsule("mixamorig:LeftForeArm", "mixamorig:LeftArm", 1.5f, 0.05f),
             BoneSpec.Capsule("mixamorig:RightArm", "mixamorig:Spine1", 2.5f, 0.06f),
-            BoneSpec.Capsule("mixamorig:RightForeArm", "mixamorig:RightArm", 1.5f, 0.05f)
+            BoneSpec.Capsule("mixamorig:RightForeArm", "mixamorig:RightArm", 1.5f, 0.05f),
+
+            // Hands earn a body of their own so a carried item hangs off something
+            // physical, and so there is one more segment wobbling at the end of the arm.
+            BoneSpec.Box("mixamorig:LeftHand", "mixamorig:LeftForeArm", 0.5f,
+                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f)),
+            BoneSpec.Box("mixamorig:RightHand", "mixamorig:RightForeArm", 0.5f,
+                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f))
         };
 
         [MenuItem("Tools/Hold My Beer/Rebuild Player Ragdoll", priority = 41)]

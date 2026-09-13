@@ -12,6 +12,8 @@ namespace HoldMyBeer.Player.Wobble
     {
         private const string PelvisBone = "mixamorig:Hips";
         private const string HeadBone = "mixamorig:Head";
+        private const string LeftHandBone = "mixamorig:LeftHand";
+        private const string RightHandBone = "mixamorig:RightHand";
 
         [SerializeField] private GameObject ragdollPrefab;
         [SerializeField] private Transform animatedRigRoot;
@@ -28,6 +30,15 @@ namespace HoldMyBeer.Player.Wobble
         private bool _rootSlavedToPelvis;
 
         public bool IsBuilt => _ragdollInstance != null;
+
+        /// <summary>
+        /// The physical hands, exposed so the hand layer can hang an item off the bone
+        /// this machine actually simulates. Null until <see cref="Build"/> has run.
+        /// </summary>
+        public Rigidbody LeftHand { get; private set; }
+
+        public Rigidbody RightHand { get; private set; }
+
         public float Tension => _solver?.Tension ?? 1f;
         public bool IsCollapsed => _solver != null && _solver.IsCollapsed;
         public Vector3 PelvisPosition => _pelvis != null ? _pelvis.position : transform.position;
@@ -98,6 +109,8 @@ namespace HoldMyBeer.Player.Wobble
             _pelvis = null;
             _animatedPelvis = null;
             _ragdollHead = null;
+            LeftHand = null;
+            RightHand = null;
             _solver = null;
         }
 
@@ -175,6 +188,15 @@ namespace HoldMyBeer.Player.Wobble
             }
 
             _ragdollHead = FindByName(_ragdollInstance.transform, HeadBone);
+
+            LeftHand = FindBody(LeftHandBone);
+            RightHand = FindBody(RightHandBone);
+        }
+
+        private Rigidbody FindBody(string boneName)
+        {
+            var bone = FindByName(_ragdollInstance.transform, boneName);
+            return bone != null ? bone.GetComponent<Rigidbody>() : null;
         }
 
         /// <summary>

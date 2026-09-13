@@ -8,7 +8,8 @@
         "HoldMyBeer.Player",
         "HoldMyBeer.UI",
         "Unity.Netcode.Runtime",
-        "Unity.Networking.Transport"
+        "Unity.Networking.Transport",
+        "HoldMyBeer.Interaction"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

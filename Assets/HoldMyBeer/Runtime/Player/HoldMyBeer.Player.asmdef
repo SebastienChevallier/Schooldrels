@@ -5,7 +5,8 @@
         "HoldMyBeer.Core",
         "Unity.Netcode.Runtime",
         "Unity.Netcode.Components",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "HoldMyBeer.Interaction"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

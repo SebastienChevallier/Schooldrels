@@ -1,5 +1,7 @@
 using HoldMyBeer.Core;
 using HoldMyBeer.Gameplay;
+using HoldMyBeer.Gameplay.Interaction;
+using HoldMyBeer.Interaction;
 using HoldMyBeer.Networking;
 using Unity.Netcode;
 using UnityEngine;
@@ -29,6 +31,16 @@ namespace HoldMyBeer.App
 
         [Header("Rules")]
         [SerializeField, Min(1)] private int maxPlayers = 8;
+
+        [Header("Interaction")]
+        [Tooltip("How far from the hand an item may be picked up.")]
+        [SerializeField, Min(0.1f)] private float maxGrabReach = 2.5f;
+
+        [Tooltip("Base speed added along the aim direction when throwing.")]
+        [SerializeField, Min(0f)] private float throwImpulse = 7f;
+
+        [Tooltip("Server-side cap on any thrown velocity. The client reports it, so it is not trusted.")]
+        [SerializeField, Min(1f)] private float maxThrowSpeed = 18f;
 
         private bool _ownsContainer;
         private ConnectionApprovalHandler _approval;
@@ -130,6 +142,19 @@ namespace HoldMyBeer.App
 
             container.Register<ILobbyLauncher>(new LobbyLauncher(networkManager, lobbyPrefab, _approval));
             container.Register<IPlayerSpawner>(new PlayerSpawner(networkManager, playerPrefab));
+
+            // Interaction rules compose exactly like the approval policies above: the
+            // order IS the priority, and the first rule that accepts wins. Insert new
+            // game rules between these two — ThrowRule accepts anything held, so
+            // nothing registered after it would ever run.
+            var interactions = new InteractionRegistry();
+            interactions.AddRule(new GrabRule(maxGrabReach));
+            interactions.AddRule(new ThrowRule(throwImpulse));
+
+            container.Register<IInteractionRegistry>(interactions);
+            container.Register<IHeldItemTracker>(new HeldItemTracker());
+            container.Register<IInteractionContext>(
+                new ServerInteractionContext(networkManager, maxThrowSpeed));
         }
 
         private bool ValidateReferences()

@@ -63,6 +63,12 @@ namespace HoldMyBeer.Player
         /// threshold; the CharacterController and the physics body must never drive
         /// the same transform at once.
         /// </summary>
+        /// <summary>
+        /// Shared with the hand layer so a second device poll is not spun up for the
+        /// same keyboard. Read-only: the controller stays the one that owns it.
+        /// </summary>
+        public IPlayerInputSource Input => _input;
+
         public void SetMotorSuspended(bool suspended)
         {
             if (_motorSuspended == suspended)

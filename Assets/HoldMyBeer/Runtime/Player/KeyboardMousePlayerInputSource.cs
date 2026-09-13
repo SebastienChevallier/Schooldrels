@@ -39,5 +39,9 @@ namespace HoldMyBeer.Player
         public bool JumpPressedThisFrame => Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
 
         public bool SprintHeld => Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed;
+
+        public bool InteractPressedThisFrame =>
+            (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ||
+            (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame);
     }
 }
