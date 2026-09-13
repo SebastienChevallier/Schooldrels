@@ -24,12 +24,15 @@ namespace HoldMyBeer.Player.Wobble
         private float _appliedDamper = -1f;
         private float _appliedMaxForce = -1f;
 
-        public WobbleBone(Rigidbody body, ConfigurableJoint joint, Transform animated)
+        private readonly float _stiffness;
+
+        public WobbleBone(Rigidbody body, ConfigurableJoint joint, Transform animated, float stiffness)
         {
             Body = body;
             _joint = joint;
             _physical = body.transform;
             _animated = animated;
+            _stiffness = Mathf.Max(0f, stiffness);
             _startLocalRotation = _physical.localRotation;
 
             // Joint space is built from the joint axes, which the builder leaves at
@@ -64,8 +67,11 @@ namespace HoldMyBeer.Player.Wobble
         /// ignores the per-axis drives entirely. Skipped when nothing changed, since
         /// the values only move during a collapse or recovery ramp.
         /// </summary>
-        public void ApplyTension(float spring, float damper, float maxForce)
+        public void ApplyTension(float rigSpring, float rigDamper, float maxForce)
         {
+            var spring = rigSpring * _stiffness;
+            var damper = rigDamper * _stiffness;
+
             if (Mathf.Approximately(spring, _appliedSpring) &&
                 Mathf.Approximately(damper, _appliedDamper) &&
                 Mathf.Approximately(maxForce, _appliedMaxForce))

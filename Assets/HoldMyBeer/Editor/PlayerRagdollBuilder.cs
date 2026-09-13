@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using HoldMyBeer.Player.Wobble;
 using UnityEditor;
 using UnityEngine;
 
@@ -18,7 +19,7 @@ namespace HoldMyBeer.Editor
         private readonly struct BoneSpec
         {
             private BoneSpec(string bone, string parent, float mass, float radius,
-                             Vector3 boxSize, Vector3 boxCenter, bool isBox)
+                             Vector3 boxSize, Vector3 boxCenter, bool isBox, float stiffness)
             {
                 Bone = bone;
                 Parent = parent;
@@ -27,6 +28,7 @@ namespace HoldMyBeer.Editor
                 BoxSize = boxSize;
                 BoxCenter = boxCenter;
                 IsBox = isBox;
+                Stiffness = stiffness;
             }
 
             public string Bone { get; }
@@ -37,14 +39,18 @@ namespace HoldMyBeer.Editor
             public Vector3 BoxCenter { get; }
             public bool IsBox { get; }
 
+            /// <summary>Multiplies the rig-wide spring. High = holds its pose, low = wobbles.</summary>
+            public float Stiffness { get; }
+
             /// <summary>A limb: a capsule whose length is measured from the child bone.</summary>
-            public static BoneSpec Capsule(string bone, string parent, float mass, float radius)
-                => new(bone, parent, mass, radius, Vector3.zero, Vector3.zero, false);
+            public static BoneSpec Capsule(string bone, string parent, float mass, float radius,
+                                           float stiffness)
+                => new(bone, parent, mass, radius, Vector3.zero, Vector3.zero, false, stiffness);
 
             /// <summary>A torso or foot: a box, since no single axis describes it.</summary>
             public static BoneSpec Box(string bone, string parent, float mass,
-                                       Vector3 size, Vector3 center)
-                => new(bone, parent, mass, 0f, size, center, true);
+                                       Vector3 size, Vector3 center, float stiffness)
+                => new(bone, parent, mass, 0f, size, center, true, stiffness);
         }
 
         // The classic 13-body humanoid ragdoll. Masses total roughly 70 units;
@@ -52,29 +58,33 @@ namespace HoldMyBeer.Editor
         private static readonly BoneSpec[] Bones =
         {
             BoneSpec.Box("mixamorig:Hips", null, 12f,
-                new Vector3(0.28f, 0.20f, 0.22f), new Vector3(0f, 0.04f, 0f)),
+                new Vector3(0.28f, 0.20f, 0.22f), new Vector3(0f, 0.04f, 0f), 1f),
             BoneSpec.Box("mixamorig:Spine1", "mixamorig:Hips", 16f,
-                new Vector3(0.34f, 0.28f, 0.22f), new Vector3(0f, 0.12f, 0f)),
-            BoneSpec.Capsule("mixamorig:Head", "mixamorig:Spine1", 5f, 0.10f),
-            BoneSpec.Capsule("mixamorig:LeftUpLeg", "mixamorig:Hips", 7f, 0.09f),
-            BoneSpec.Capsule("mixamorig:LeftLeg", "mixamorig:LeftUpLeg", 4f, 0.07f),
+                new Vector3(0.34f, 0.28f, 0.22f), new Vector3(0f, 0.12f, 0f), 5f),
+            BoneSpec.Capsule("mixamorig:Head", "mixamorig:Spine1", 5f, 0.10f, 3f),
+            BoneSpec.Capsule("mixamorig:LeftUpLeg", "mixamorig:Hips", 7f, 0.09f, 2f),
+            BoneSpec.Capsule("mixamorig:LeftLeg", "mixamorig:LeftUpLeg", 4f, 0.07f, 1.6f),
             BoneSpec.Box("mixamorig:LeftFoot", "mixamorig:LeftLeg", 1f,
-                new Vector3(0.09f, 0.19f, 0.10f), new Vector3(0f, 0.08f, 0f)),
-            BoneSpec.Capsule("mixamorig:RightUpLeg", "mixamorig:Hips", 7f, 0.09f),
-            BoneSpec.Capsule("mixamorig:RightLeg", "mixamorig:RightUpLeg", 4f, 0.07f),
+                new Vector3(0.09f, 0.19f, 0.10f), new Vector3(0f, 0.08f, 0f), 1.2f),
+            BoneSpec.Capsule("mixamorig:RightUpLeg", "mixamorig:Hips", 7f, 0.09f, 2f),
+            BoneSpec.Capsule("mixamorig:RightLeg", "mixamorig:RightUpLeg", 4f, 0.07f, 1.6f),
             BoneSpec.Box("mixamorig:RightFoot", "mixamorig:RightLeg", 1f,
-                new Vector3(0.09f, 0.19f, 0.10f), new Vector3(0f, 0.08f, 0f)),
-            BoneSpec.Capsule("mixamorig:LeftArm", "mixamorig:Spine1", 2.5f, 0.06f),
-            BoneSpec.Capsule("mixamorig:LeftForeArm", "mixamorig:LeftArm", 1.5f, 0.05f),
-            BoneSpec.Capsule("mixamorig:RightArm", "mixamorig:Spine1", 2.5f, 0.06f),
-            BoneSpec.Capsule("mixamorig:RightForeArm", "mixamorig:RightArm", 1.5f, 0.05f),
+                new Vector3(0.09f, 0.19f, 0.10f), new Vector3(0f, 0.08f, 0f), 1.2f),
+
+            // The arms stay the loosest bones on the body — six times softer than the
+            // spine — because they are what the player actually watches. Softer than
+            // this and they hang so far below their IK goal that they leave the frame.
+            BoneSpec.Capsule("mixamorig:LeftArm", "mixamorig:Spine1", 2.5f, 0.06f, 0.9f),
+            BoneSpec.Capsule("mixamorig:LeftForeArm", "mixamorig:LeftArm", 1.5f, 0.05f, 0.8f),
+            BoneSpec.Capsule("mixamorig:RightArm", "mixamorig:Spine1", 2.5f, 0.06f, 0.9f),
+            BoneSpec.Capsule("mixamorig:RightForeArm", "mixamorig:RightArm", 1.5f, 0.05f, 0.8f),
 
             // Hands earn a body of their own so a carried item hangs off something
             // physical, and so there is one more segment wobbling at the end of the arm.
             BoneSpec.Box("mixamorig:LeftHand", "mixamorig:LeftForeArm", 0.5f,
-                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f)),
+                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f), 0.8f),
             BoneSpec.Box("mixamorig:RightHand", "mixamorig:RightForeArm", 0.5f,
-                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f))
+                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f), 0.8f)
         };
 
         [MenuItem("Tools/Hold My Beer/Rebuild Player Ragdoll", priority = 41)]
@@ -124,6 +134,11 @@ namespace HoldMyBeer.Editor
                 bodies[spec.Bone] = body;
 
                 AddCollider(bone, spec);
+
+                bone.gameObject.AddComponent<WobbleBoneTuning>();
+                var tuningSerialized = new SerializedObject(bone.GetComponent<WobbleBoneTuning>());
+                tuningSerialized.FindProperty("stiffness").floatValue = spec.Stiffness;
+                tuningSerialized.ApplyModifiedPropertiesWithoutUndo();
 
                 if (spec.Parent == null)
                 {

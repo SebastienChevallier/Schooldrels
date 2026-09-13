@@ -42,6 +42,7 @@ GameObject:
   - component: {fileID: 1964475532313173511}
   - component: {fileID: 9219756489568053321}
   - component: {fileID: 5678892202087926950}
+  - component: {fileID: 2612756069930079186}
   - component: {fileID: 4685812489600138728}
   m_Layer: 8
   m_Name: mixamorig:RightUpLeg
@@ -116,6 +117,19 @@ CapsuleCollider:
   m_Height: 0.4059943
   m_Direction: 1
   m_Center: {x: 0, y: 0.20299715, z: 0}
+--- !u!114 &2612756069930079186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 187913118494289492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 2
 --- !u!153 &4685812489600138728
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -293,6 +307,7 @@ GameObject:
   - component: {fileID: 6489390389115074994}
   - component: {fileID: 758470372418675399}
   - component: {fileID: 3287178465143398221}
+  - component: {fileID: 7453977713740533736}
   - component: {fileID: 7426695721329950742}
   m_Layer: 8
   m_Name: mixamorig:Spine1
@@ -365,6 +380,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.34, y: 0.28, z: 0.22}
   m_Center: {x: 0, y: 0.12, z: 0}
+--- !u!114 &7453977713740533736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 965999413694110509}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 5
 --- !u!153 &7426695721329950742
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -574,6 +602,7 @@ GameObject:
   - component: {fileID: 26180575803351326}
   - component: {fileID: 3469908340805210786}
   - component: {fileID: 68004117206697651}
+  - component: {fileID: 8437323324018350035}
   m_Layer: 8
   m_Name: mixamorig:Hips
   m_TagString: Untagged
@@ -647,6 +676,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.28, y: 0.2, z: 0.22}
   m_Center: {x: 0, y: 0.04, z: 0}
+--- !u!114 &8437323324018350035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1382154267852341334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 1
 --- !u!1 &1399682182040617306
 GameObject:
   m_ObjectHideFlags: 0
@@ -912,6 +954,7 @@ GameObject:
   - component: {fileID: 7564619145421294372}
   - component: {fileID: 3061038215535527768}
   - component: {fileID: 5172709496419461527}
+  - component: {fileID: 6050512860167685440}
   - component: {fileID: 119374681159369481}
   m_Layer: 8
   m_Name: mixamorig:Head
@@ -986,6 +1029,19 @@ CapsuleCollider:
   m_Height: 0.205
   m_Direction: 1
   m_Center: {x: 0, y: 0.098152295, z: 0}
+--- !u!114 &6050512860167685440
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2941885258255945790}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 3
 --- !u!153 &119374681159369481
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -1226,6 +1282,7 @@ GameObject:
   - component: {fileID: 5703198300421346530}
   - component: {fileID: 1507890580602925933}
   - component: {fileID: 8499723028082052117}
+  - component: {fileID: 3907890527156555882}
   - component: {fileID: 9100377094833809855}
   m_Layer: 8
   m_Name: mixamorig:LeftHand
@@ -1302,6 +1359,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.05, y: 0.11, z: 0.09}
   m_Center: {x: 0, y: 0.05, z: 0}
+--- !u!114 &3907890527156555882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3381081412147184650}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 0.8
 --- !u!153 &9100377094833809855
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -1604,6 +1674,7 @@ GameObject:
   - component: {fileID: 1908880853881368834}
   - component: {fileID: 1323186790894051635}
   - component: {fileID: 5015022051741661932}
+  - component: {fileID: 1833469533865187226}
   - component: {fileID: 5430634929875185363}
   m_Layer: 8
   m_Name: mixamorig:LeftForeArm
@@ -1678,6 +1749,19 @@ CapsuleCollider:
   m_Height: 0.27614456
   m_Direction: 1
   m_Center: {x: 0, y: 0.13807228, z: 0}
+--- !u!114 &1833469533865187226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4376937398375961242}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 0.8
 --- !u!153 &5430634929875185363
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -1911,6 +1995,7 @@ GameObject:
   - component: {fileID: 2959687943588548627}
   - component: {fileID: 3864012626345554714}
   - component: {fileID: 6790290691912789044}
+  - component: {fileID: 6181799322403960327}
   - component: {fileID: 3284685704751567157}
   m_Layer: 8
   m_Name: mixamorig:RightForeArm
@@ -1985,6 +2070,19 @@ CapsuleCollider:
   m_Height: 0.2761446
   m_Direction: 1
   m_Center: {x: 0, y: 0.1380723, z: 0}
+--- !u!114 &6181799322403960327
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5076424363054962652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 0.8
 --- !u!153 &3284685704751567157
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -2161,6 +2259,7 @@ GameObject:
   - component: {fileID: 7583713719955798144}
   - component: {fileID: 1740562404407160909}
   - component: {fileID: 8011015806804656563}
+  - component: {fileID: 7280875396643014087}
   - component: {fileID: 4278859278832423982}
   m_Layer: 8
   m_Name: mixamorig:RightLeg
@@ -2235,6 +2334,19 @@ CapsuleCollider:
   m_Height: 0.42099032
   m_Direction: 1
   m_Center: {x: 0, y: 0.21049516, z: 0}
+--- !u!114 &7280875396643014087
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5412471240022510291}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 1.6
 --- !u!153 &4278859278832423982
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -2539,6 +2651,7 @@ GameObject:
   - component: {fileID: 6966021180278746754}
   - component: {fileID: 2786486446684282636}
   - component: {fileID: 5522969525125200383}
+  - component: {fileID: 6596753142286859316}
   - component: {fileID: 1153480939371362110}
   m_Layer: 8
   m_Name: mixamorig:RightHand
@@ -2615,6 +2728,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.05, y: 0.11, z: 0.09}
   m_Center: {x: 0, y: 0.05, z: 0}
+--- !u!114 &6596753142286859316
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6310790168430891826}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 0.8
 --- !u!153 &1153480939371362110
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -2728,6 +2854,7 @@ GameObject:
   - component: {fileID: 7399367974577098570}
   - component: {fileID: 1856667038358688631}
   - component: {fileID: 1122474288814829900}
+  - component: {fileID: 4685656559680259866}
   - component: {fileID: 2201076934284321538}
   m_Layer: 8
   m_Name: mixamorig:RightArm
@@ -2802,6 +2929,19 @@ CapsuleCollider:
   m_Height: 0.27404687
   m_Direction: 1
   m_Center: {x: 0, y: 0.13702343, z: 0}
+--- !u!114 &4685656559680259866
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6380717666573274415}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 0.9
 --- !u!153 &2201076934284321538
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -3156,6 +3296,7 @@ GameObject:
   - component: {fileID: 1767526780402177177}
   - component: {fileID: 3681693807856974634}
   - component: {fileID: 2383303438864417086}
+  - component: {fileID: 5426284329903741868}
   - component: {fileID: 4762589639751656905}
   m_Layer: 8
   m_Name: mixamorig:LeftLeg
@@ -3230,6 +3371,19 @@ CapsuleCollider:
   m_Height: 0.42099017
   m_Direction: 1
   m_Center: {x: 0, y: 0.21049508, z: 0}
+--- !u!114 &5426284329903741868
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6738299877197323033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 1.6
 --- !u!153 &4762589639751656905
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -3534,6 +3688,7 @@ GameObject:
   - component: {fileID: 7581925543751582102}
   - component: {fileID: 7861802507036884154}
   - component: {fileID: 6084251949684357955}
+  - component: {fileID: 4985347582708526375}
   - component: {fileID: 2312137253546308736}
   m_Layer: 8
   m_Name: mixamorig:LeftUpLeg
@@ -3608,6 +3763,19 @@ CapsuleCollider:
   m_Height: 0.4059944
   m_Direction: 1
   m_Center: {x: 0, y: 0.2029972, z: 0}
+--- !u!114 &4985347582708526375
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7876655351788918342}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 2
 --- !u!153 &2312137253546308736
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -3785,6 +3953,7 @@ GameObject:
   - component: {fileID: 1949539959088181958}
   - component: {fileID: 635502466022054685}
   - component: {fileID: 6847549282224660398}
+  - component: {fileID: 1702742656220759082}
   - component: {fileID: 5962000455142295402}
   m_Layer: 8
   m_Name: mixamorig:LeftFoot
@@ -3857,6 +4026,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.09, y: 0.19, z: 0.1}
   m_Center: {x: 0, y: 0.08, z: 0}
+--- !u!114 &1702742656220759082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8142236418499183922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 1.2
 --- !u!153 &5962000455142295402
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -4241,6 +4423,7 @@ GameObject:
   - component: {fileID: 5926740627905166577}
   - component: {fileID: 7592350949007064052}
   - component: {fileID: 2279297403213859288}
+  - component: {fileID: 4630633785608910909}
   - component: {fileID: 8845156449658859418}
   m_Layer: 8
   m_Name: mixamorig:RightFoot
@@ -4313,6 +4496,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.09, y: 0.19, z: 0.1}
   m_Center: {x: 0, y: 0.08, z: 0}
+--- !u!114 &4630633785608910909
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8635243537302566766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 1.2
 --- !u!153 &8845156449658859418
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -4426,6 +4622,7 @@ GameObject:
   - component: {fileID: 4918497620970903786}
   - component: {fileID: 5831526528758935026}
   - component: {fileID: 8717567933386135140}
+  - component: {fileID: 373904983346664914}
   - component: {fileID: 4319636641591003858}
   m_Layer: 8
   m_Name: mixamorig:LeftArm
@@ -4500,6 +4697,19 @@ CapsuleCollider:
   m_Height: 0.2740468
   m_Direction: 1
   m_Center: {x: 0, y: 0.1370234, z: 0}
+--- !u!114 &373904983346664914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8726280842221572397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  stiffness: 0.9
 --- !u!153 &4319636641591003858
 ConfigurableJoint:
   m_ObjectHideFlags: 0

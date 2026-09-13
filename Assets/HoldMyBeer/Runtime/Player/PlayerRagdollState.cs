@@ -51,7 +51,6 @@ namespace HoldMyBeer.Player
             // the ragdoll needs, or it is born at the origin and catapulted.
             _rig.Build();
             _rig.SetTargetTension(_targetTension.Value);
-            _rig.SetHeadVisible(!IsOwner);
 
             _targetTension.OnValueChanged += OnTensionChanged;
         }

@@ -11,7 +11,6 @@ namespace HoldMyBeer.Player.Wobble
     public sealed class WobbleRig : MonoBehaviour
     {
         private const string PelvisBone = "mixamorig:Hips";
-        private const string HeadBone = "mixamorig:Head";
         private const string LeftHandBone = "mixamorig:LeftHand";
         private const string RightHandBone = "mixamorig:RightHand";
 
@@ -25,7 +24,6 @@ namespace HoldMyBeer.Player.Wobble
         private WobbleSolver _solver;
         private Rigidbody _pelvis;
         private Transform _animatedPelvis;
-        private Transform _ragdollHead;
         private float _targetTension = 1f;
         private bool _rootSlavedToPelvis;
 
@@ -108,7 +106,6 @@ namespace HoldMyBeer.Player.Wobble
             _bones.Clear();
             _pelvis = null;
             _animatedPelvis = null;
-            _ragdollHead = null;
             LeftHand = null;
             RightHand = null;
             _solver = null;
@@ -135,20 +132,11 @@ namespace HoldMyBeer.Player.Wobble
             }
         }
 
-        /// <summary>
-        /// Shrinks the head bone away for the owner. Y Bot is a single mesh, so there
-        /// is no separate first-person arm rig to maintain: the player simply looks
-        /// out from a body whose head is scaled to nothing.
-        /// </summary>
-        public void SetHeadVisible(bool visible)
-        {
-            if (_ragdollHead != null)
-            {
-                // Not zero: a null scale is a non-invertible matrix and the skinning
-                // complains about it every frame.
-                _ragdollHead.localScale = visible ? Vector3.one : Vector3.one * 0.0001f;
-            }
-        }
+        // The head used to be scaled to nothing for the owner, back when the camera sat
+        // at eye level. That bone carries a Rigidbody, a collider and a joint, and a
+        // 1e-4 scale degenerates its inertia tensor: measured, it made the head deviate
+        // 156 degrees from its target instead of 19. Moving the camera down to the
+        // sternum removed the need for the trick entirely.
 
         private void PairBones()
         {
@@ -165,7 +153,10 @@ namespace HoldMyBeer.Player.Wobble
                     continue;
                 }
 
-                _bones.Add(new WobbleBone(joint.GetComponent<Rigidbody>(), joint, animated));
+                var tuning = joint.GetComponent<WobbleBoneTuning>();
+                var stiffness = tuning != null ? tuning.Stiffness : 1f;
+
+                _bones.Add(new WobbleBone(joint.GetComponent<Rigidbody>(), joint, animated, stiffness));
             }
 
             // The pelvis has no joint, so it is not in the loop above. It is the bone
@@ -186,8 +177,6 @@ namespace HoldMyBeer.Player.Wobble
             {
                 Debug.LogError($"[Hold My Beer] Animated rig has no '{PelvisBone}' bone.");
             }
-
-            _ragdollHead = FindByName(_ragdollInstance.transform, HeadBone);
 
             LeftHand = FindBody(LeftHandBone);
             RightHand = FindBody(RightHandBone);

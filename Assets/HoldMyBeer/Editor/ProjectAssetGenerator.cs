@@ -174,14 +174,22 @@ namespace HoldMyBeer.Editor
 
             var pivot = new GameObject("CameraPivot");
             pivot.transform.SetParent(root.transform, false);
-            pivot.transform.localPosition = new Vector3(0f, 1.7f, 0f);
+
+            // Sternum height rather than eye height, so the arms stay in frame instead
+            // of hanging below it. Pushed forward as well: at chest height the camera
+            // would otherwise sit inside the torso collider and render its interior.
+            pivot.transform.localPosition = new Vector3(0f, 1.45f, 0.16f);
 
             var cameraObject = new GameObject("PlayerCamera", typeof(Camera), typeof(AudioListener));
             cameraObject.tag = "MainCamera";
             cameraObject.transform.SetParent(pivot.transform, false);
 
             var camera = cameraObject.GetComponent<Camera>();
-            camera.nearClipPlane = 0.05f;
+            // Tuned against the measured hand distance, not guessed: the hands settle
+            // about 0.4 m from the lens, and the player's own chest sits right on it now
+            // that the camera is at sternum height. 0.11 clips the chest sliver and
+            // leaves a wide margin before it would start eating the hands.
+            camera.nearClipPlane = 0.11f;
             camera.enabled = false;
 
             var audioListener = cameraObject.GetComponent<AudioListener>();

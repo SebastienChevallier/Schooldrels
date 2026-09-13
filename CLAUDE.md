@@ -310,6 +310,9 @@ règle enregistrée après elle ne s'exécutera jamais. Il n'y a rien pour t'en 
 | L'IK des mains ne bouge rien, sans aucun message | `AnimatorCullingMode.CullUpdateTransforms` coupe l'IK quand aucun renderer n'est visible — or le rig animé n'en a aucun | `cullingMode = AlwaysAnimate` dans le générateur |
 | Les buts IK sont ignorés | l'IK Pass n'est pas activée sur la couche de l'`AnimatorController` | activée par code dans `ProjectAssetGenerator` |
 | Le personnage s'écrase au sol dès qu'on réveille l'Animator | l'état par défaut n'a **pas** de motion, et un Animator humanoïde y écrit une pose à zéro | `EnsureDefaultStateHasMotion` génère un idle de repli et le signale en warning |
+| Un os part en vrille (156° d'écart) alors que sa raideur est haute | on l'avait mis à l'échelle 1e-4 pour le masquer, ce qui dégénère son tenseur d'inertie — il portait un `Rigidbody`, un collider et un joint | ne jamais mettre à l'échelle un os physique ; la caméra au sternum a rendu le masquage inutile |
+| Un fin liseré traverse la vue FPS | la caméra est dans le maillage du joueur, dont le back-face culling ne laisse qu'un éclat rasant | `nearClipPlane` réglé sur la distance des mains mesurée, pas au jugé |
+| Les mains sortent du cadre en FPS | près de l'objectif un petit fléchissement fait un grand angle : à 25 cm, 25 cm de chute font 45° | éloigner les buts IK (≈0.6 m) plutôt que de les baisser |
 
 ---
 
