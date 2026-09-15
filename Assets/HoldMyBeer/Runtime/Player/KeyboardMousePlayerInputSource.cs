@@ -43,5 +43,13 @@ namespace HoldMyBeer.Player
         public bool InteractPressedThisFrame =>
             (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ||
             (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame);
+
+        public bool InteractHeld =>
+            (Mouse.current != null && Mouse.current.leftButton.isPressed) ||
+            (Keyboard.current != null && Keyboard.current.eKey.isPressed);
+
+        public bool InteractReleasedThisFrame =>
+            (Mouse.current != null && Mouse.current.leftButton.wasReleasedThisFrame) ||
+            (Keyboard.current != null && Keyboard.current.eKey.wasReleasedThisFrame);
     }
 }

@@ -468,6 +468,8 @@ namespace HoldMyBeer.Editor
             spawnRoot.AddComponent<SpawnPointRegistry>();
             new GameObject("GameSceneBootstrap").AddComponent<GameSceneBootstrap>();
 
+            new GameObject("CrosshairHud").AddComponent<CrosshairHud>();
+
             var grabbableSpawner = new GameObject("GrabbableSpawner").AddComponent<GrabbableSpawner>();
             var spawnerSerialized = new SerializedObject(grabbableSpawner);
             spawnerSerialized.FindProperty("grabbablePrefab").objectReferenceValue =

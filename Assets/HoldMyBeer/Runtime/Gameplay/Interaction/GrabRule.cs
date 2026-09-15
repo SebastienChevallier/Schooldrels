@@ -40,5 +40,8 @@ namespace HoldMyBeer.Gameplay.Interaction
         {
             context.Hold(request.AimedGrabbable, request.ClientId, HandSide.Right);
         }
+
+        /// <summary>Picking something up has nothing to wind up.</summary>
+        public bool IsCharged => false;
     }
 }

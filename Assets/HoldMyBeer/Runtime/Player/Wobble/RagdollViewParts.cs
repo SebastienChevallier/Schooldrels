@@ -16,16 +16,32 @@ namespace HoldMyBeer.Player.Wobble
         [SerializeField] private SkinnedMeshRenderer[] armsOnly;
 
         private bool _armsBuilt;
+        private bool _ownerView;
+        private bool _armsWanted;
 
+        /// <summary>Hides the body from its owner. The arms are a separate decision.</summary>
         public void SetOwnerView(bool ownerView)
         {
+            _ownerView = ownerView;
+
             if (ownerView)
             {
                 BuildArmsMeshes();
             }
 
             Apply(fullBody, !ownerView);
-            Apply(armsOnly, ownerView);
+            Apply(armsOnly, ownerView && _armsWanted);
+        }
+
+        /// <summary>
+        /// Empty hands show nothing: arms hanging in view with no reason to be there
+        /// read as clutter. They appear when they are holding something worth looking at.
+        /// Only ever honoured in the owner's view — remote players see the whole body.
+        /// </summary>
+        public void SetArmsVisible(bool visible)
+        {
+            _armsWanted = visible;
+            Apply(armsOnly, _ownerView && visible);
         }
 
         /// <summary>

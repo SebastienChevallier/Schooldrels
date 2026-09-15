@@ -24,5 +24,10 @@ namespace HoldMyBeer.Player
         /// has to learn about new verbs.
         /// </summary>
         bool InteractPressedThisFrame { get; }
+
+        /// <summary>Held down: charged actions wind up for as long as this is true.</summary>
+        bool InteractHeld { get; }
+
+        bool InteractReleasedThisFrame { get; }
     }
 }

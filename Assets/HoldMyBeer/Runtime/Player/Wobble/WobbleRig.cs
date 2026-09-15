@@ -151,6 +151,15 @@ namespace HoldMyBeer.Player.Wobble
             }
         }
 
+        /// <summary>Shows the owner's arms only while they are carrying something.</summary>
+        public void SetArmsVisible(bool visible)
+        {
+            if (_viewParts != null)
+            {
+                _viewParts.SetArmsVisible(visible);
+            }
+        }
+
         // The head used to be scaled to nothing for the owner, back when the camera sat
         // at eye level. That bone carries a Rigidbody, a collider and a joint, and a
         // 1e-4 scale degenerates its inertia tensor: measured, it made the head deviate

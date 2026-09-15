@@ -202,7 +202,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3836916788
+  GlobalObjectIdHash: 3783213676
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -372,6 +372,7 @@ MonoBehaviour:
   cameraPivot: {fileID: 4559842912633232424}
   playerController: {fileID: 6260207762719212848}
   aimDistance: 3
+  chargeTime: 1.1
 --- !u!1001 &5190715036654833029
 PrefabInstance:
   m_ObjectHideFlags: 0

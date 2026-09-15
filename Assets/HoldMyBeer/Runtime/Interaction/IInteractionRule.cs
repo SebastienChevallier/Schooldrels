@@ -19,5 +19,16 @@ namespace HoldMyBeer.Interaction
         /// Server only, and only after <see cref="CanApply"/> returned true there.
         /// </summary>
         void Apply(in InteractionRequest request, IInteractionContext context);
+
+        /// <summary>
+        /// True for actions the player winds up: the button press starts a charge and
+        /// the action fires on release, with <see cref="InteractionRequest.Charge"/>
+        /// filled in. False fires immediately on press.
+        ///
+        /// It lives on the rule rather than in the interactor so that a future rule —
+        /// pulling a pint by holding, winding up a shove — gets the behaviour without
+        /// anyone touching the player code.
+        /// </summary>
+        bool IsCharged { get; }
     }
 }

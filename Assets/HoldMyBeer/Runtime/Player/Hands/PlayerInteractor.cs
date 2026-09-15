@@ -18,11 +18,17 @@ namespace HoldMyBeer.Player.Hands
         [SerializeField] private PlayerController playerController;
         [SerializeField] private float aimDistance = 3f;
 
+        [Tooltip("Seconds of holding the button to reach a full-strength throw.")]
+        [SerializeField, Min(0.05f)] private float chargeTime = 1.1f;
+
         private PlayerHands _hands;
         private IInteractionRegistry _registry;
         private IInteractionContext _context;
         private IHeldItemTracker _tracker;
+        private IInteractionPrompt _prompt;
         private int _aimMask = ~0;
+        private bool _charging;
+        private float _chargeStartedAt;
 
         /// <summary>What the crosshair would do right now, or null. For the UI later.</summary>
         public string Prompt { get; private set; }
@@ -45,6 +51,7 @@ namespace HoldMyBeer.Player.Hands
                 AppServices.Container.TryResolve(out _registry);
                 AppServices.Container.TryResolve(out _context);
                 AppServices.Container.TryResolve(out _tracker);
+                AppServices.Container.TryResolve(out _prompt);
             }
         }
 
@@ -111,24 +118,77 @@ namespace HoldMyBeer.Player.Hands
             // refused by the server.
             _hands.SetReachTarget(_hands.HeldHand == HandSide.None ? grabbable : null);
 
-            var request = BuildRequest(grabbable, target, aimPoint, direction);
-            Prompt = _registry.TryResolve(in request, out _, out var prompt) ? prompt : null;
+            var charge = CurrentCharge;
+            var request = BuildRequest(grabbable, target, aimPoint, direction, charge);
+            var resolved = _registry.TryResolve(in request, out var rule, out var prompt);
 
-            if (playerController != null && playerController.Input.InteractPressedThisFrame)
+            Prompt = resolved ? prompt : null;
+            UpdateCharge(resolved, rule, in request);
+
+            _prompt?.Publish(Prompt, CurrentCharge, _charging);
+        }
+
+        /// <summary>
+        /// Instant actions fire on the press; wound-up ones start charging and fire on
+        /// release. Which is which is the rule's business, not this component's.
+        /// </summary>
+        private void UpdateCharge(bool resolved, IInteractionRule rule, in InteractionRequest request)
+        {
+            var input = playerController != null ? playerController.Input : null;
+            if (input == null)
             {
-                RequestInteractRpc(
-                    ToReference(grabbable),
-                    ToReference(target),
-                    aimPoint,
-                    direction,
-                    request.HandPosition,
-                    request.HandRotation,
-                    request.HandVelocity);
+                return;
+            }
+
+            // Whatever was being wound up no longer applies — the item was knocked out
+            // of our hands, or we looked away from the target.
+            if (!resolved)
+            {
+                _charging = false;
+                return;
+            }
+
+            if (input.InteractPressedThisFrame)
+            {
+                if (rule.IsCharged)
+                {
+                    _charging = true;
+                    _chargeStartedAt = Time.time;
+                }
+                else
+                {
+                    Send(in request, 0f);
+                }
+            }
+
+            // Released, or focus lost mid-throw: either way, let go of what we were
+            // winding up rather than leaving the player stuck holding a charge.
+            if (_charging && !input.InteractHeld)
+            {
+                Send(in request, CurrentCharge);
+                _charging = false;
             }
         }
 
+        private float CurrentCharge =>
+            _charging ? Mathf.Clamp01((Time.time - _chargeStartedAt) / chargeTime) : 0f;
+
+        private void Send(in InteractionRequest request, float charge)
+        {
+            RequestInteractRpc(
+                ToReference(request.AimedGrabbable),
+                ToReference(request.AimedTarget),
+                request.AimPoint,
+                request.AimDirection,
+                request.HandPosition,
+                request.HandRotation,
+                request.HandVelocity,
+                charge);
+        }
+
         private InteractionRequest BuildRequest(
-            IGrabbable grabbable, IInteractionTarget target, Vector3 aimPoint, Vector3 direction)
+            IGrabbable grabbable, IInteractionTarget target, Vector3 aimPoint, Vector3 direction,
+            float charge)
         {
             IGrabbable heldItem = null;
             if (_tracker != null && _tracker.TryGetHeldItem(OwnerClientId, out var found) && found.IsHeld)
@@ -145,7 +205,8 @@ namespace HoldMyBeer.Player.Hands
                 direction,
                 _hands.ActiveHandPosition,
                 _hands.ActiveHandRotation,
-                _hands.ActiveHandVelocity);
+                _hands.ActiveHandVelocity,
+                charge);
         }
 
         [Rpc(SendTo.Server)]
@@ -157,6 +218,7 @@ namespace HoldMyBeer.Player.Hands
             Vector3 handPosition,
             Quaternion handRotation,
             Vector3 handVelocity,
+            float charge,
             RpcParams rpcParams = default)
         {
             // A player may only act for themselves. Same rule as the ragdoll collapse,
@@ -182,7 +244,8 @@ namespace HoldMyBeer.Player.Hands
                 aimDirection,
                 handPosition,
                 handRotation,
-                handVelocity);
+                handVelocity,
+                charge);
 
             // Re-resolved server-side rather than trusting the client's choice of rule:
             // the client tells us what it aimed at, never what should happen.

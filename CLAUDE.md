@@ -267,6 +267,14 @@ public sealed class FillGlassRule : IInteractionRule
 L'ordre **est** la priorité. `ThrowRule` accepte tout dès qu'on tient un objet : une
 règle enregistrée après elle ne s'exécutera jamais. Il n'y a rien pour t'en avertir.
 
+`IsCharged` décide du moment de déclenchement : `false` part au clic, `true` démarre une
+charge et part au relâchement, avec `InteractionRequest.Charge` rempli entre 0 et 1.
+C'est la règle qui le dit, pas le joueur — une future règle « tirer une pinte en
+maintenant » hérite du comportement sans qu'on touche à `PlayerInteractor`.
+
+L'invite affichée vient de `CanApply`, publiée dans `IInteractionPrompt` et lue par
+`CrosshairHud`. L'UI ne connaît ni les joueurs, ni les règles, ni NGO.
+
 **Un objet de jeu répliqué** → prefab + `NetworkObject`, ajouté à la
 `NetworkPrefabsList`, spawné **par le serveur** avec `.Spawn()`.
 
@@ -316,6 +324,7 @@ règle enregistrée après elle ne s'exécutera jamais. Il n'y a rien pour t'en 
 | Les bras traînent derrière le joueur quand il marche | un ressort retarde par définition ; le ballottement était accroché à la translation | tous les os épinglés en `isKinematic` debout, le retard vient de la rotation de la vue dans `PlayerHands` |
 | Un maillage généré en éditeur sort `null` dans le prefab | créé et référencé dans la même frame, il ne survit pas à la sérialisation, et l'échec est muet | construire le maillage au runtime (`ArmsOnlyMesh`), pas comme asset |
 | Une main tenue ne transmet rien au lancer | un `Rigidbody` kinematic ne rapporte aucune vélocité | vélocité dérivée de deux positions successives dans `PlayerHands` |
+| L'invite reste vide alors qu'on vise bien un objet | l'objet test tombe entre deux appels de mesure | le figer en kinematic le temps du test, ce n'est pas un bug du jeu |
 
 ---
 
@@ -324,8 +333,10 @@ règle enregistrée après elle ne s'exécutera jamais. Il n'y a rien pour t'en 
 Fait : boot, menu, lobby répliqué avec ready/start, chargement réseau de la scène de
 jeu, spawn des joueurs, contrôleur FPS, Direct IP + Relay + Steam, ragdoll passif à
 tension unique pour l'effondrement et le relevé, mains en IK dont le ballottement est
-piloté par la rotation de la vue, vue première personne bras seuls, objets attrapables
-et lançables, registre d'interactions contextuelles.
+piloté par la rotation de la vue, vue première personne bras seuls et visibles
+uniquement quand on porte quelque chose, objets attrapables et lançables avec une charge
+au maintien du clic, HUD de visée avec invite et jauge de charge, registre
+d'interactions contextuelles.
 
 Manque de contenu, pas de code : `AC_Player` n'a ni idle ni locomotion. Un idle de
 repli est généré (`_ART/Player/Animation/IdleFallback.anim`) pour que le rig ne

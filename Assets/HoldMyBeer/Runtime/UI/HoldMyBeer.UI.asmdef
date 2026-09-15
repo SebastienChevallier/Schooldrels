@@ -8,7 +8,8 @@
         "Unity.InputSystem",
         "UnityEngine.UI",
         "HoldMyBeer.Gameplay",
-        "Unity.Collections"
+        "Unity.Collections",
+        "HoldMyBeer.Interaction"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

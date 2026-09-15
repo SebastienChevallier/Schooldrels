@@ -61,8 +61,15 @@ namespace HoldMyBeer.Player.Hands
 
         public void SetHeldItem(IGrabbable item, HandSide hand)
         {
+            var changed = !ReferenceEquals(_heldItem, item);
+
             _heldItem = item;
             _heldHand = item != null ? hand : HandSide.None;
+
+            if (changed && wobbleRig != null)
+            {
+                wobbleRig.SetArmsVisible(item != null);
+            }
         }
 
         private void LateUpdate()

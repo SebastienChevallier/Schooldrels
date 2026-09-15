@@ -17,8 +17,10 @@ namespace HoldMyBeer.Interaction
             Vector3 aimDirection,
             Vector3 handPosition,
             Quaternion handRotation,
-            Vector3 handVelocity)
+            Vector3 handVelocity,
+            float charge = 0f)
         {
+            Charge = Mathf.Clamp01(charge);
             ClientId = clientId;
             HeldItem = heldItem;
             AimedGrabbable = aimedGrabbable;
@@ -50,6 +52,12 @@ namespace HoldMyBeer.Interaction
         public Vector3 HandPosition { get; }
         public Quaternion HandRotation { get; }
         public Vector3 HandVelocity { get; }
+
+        /// <summary>
+        /// How long the player held the button, normalised to 0..1. Reported by the
+        /// client and therefore clamped on arrival, like every other value here.
+        /// </summary>
+        public float Charge { get; }
 
         public bool HasHeldItem => HeldItem != null;
     }

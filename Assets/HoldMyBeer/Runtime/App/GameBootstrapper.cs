@@ -36,8 +36,17 @@ namespace HoldMyBeer.App
         [Tooltip("How far from the hand an item may be picked up.")]
         [SerializeField, Min(0.1f)] private float maxGrabReach = 2.5f;
 
-        [Tooltip("Base speed added along the aim direction when throwing.")]
-        [SerializeField, Min(0f)] private float throwImpulse = 7f;
+        [Tooltip("Speed of a throw released immediately, with no wind-up.")]
+        [SerializeField, Min(0f)] private float minThrowImpulse = 4f;
+
+        [Tooltip("Speed of a fully wound-up throw.")]
+        [SerializeField, Min(0f)] private float maxThrowImpulse = 16f;
+
+        [Tooltip("Upward arc added to an uncharged throw, fading to nothing at full charge.")]
+        [SerializeField, Min(0f)] private float throwLob = 0.45f;
+
+        [Tooltip("How much the hand's own motion adds to a light throw.")]
+        [SerializeField, Min(0f)] private float handThrowInfluence = 0.6f;
 
         [Tooltip("Server-side cap on any thrown velocity. The client reports it, so it is not trusted.")]
         [SerializeField, Min(1f)] private float maxThrowSpeed = 18f;
@@ -149,9 +158,10 @@ namespace HoldMyBeer.App
             // nothing registered after it would ever run.
             var interactions = new InteractionRegistry();
             interactions.AddRule(new GrabRule(maxGrabReach));
-            interactions.AddRule(new ThrowRule(throwImpulse));
+            interactions.AddRule(new ThrowRule(minThrowImpulse, maxThrowImpulse, throwLob, handThrowInfluence));
 
             container.Register<IInteractionRegistry>(interactions);
+            container.Register<IInteractionPrompt>(new InteractionPrompt());
             container.Register<IHeldItemTracker>(new HeldItemTracker());
             container.Register<IInteractionContext>(
                 new ServerInteractionContext(networkManager, maxThrowSpeed));
