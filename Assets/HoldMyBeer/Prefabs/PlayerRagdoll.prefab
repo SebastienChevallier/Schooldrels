@@ -1,5 +1,149 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &880612924188882
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9197806646582965820}
+  - component: {fileID: 2580718668556152868}
+  m_Layer: 8
+  m_Name: Alpha_Joints_ArmsOnly
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9197806646582965820
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880612924188882}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6072723743975416904}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!137 &2580718668556152868
+SkinnedMeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880612924188882}
+  m_Enabled: 0
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 3
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: -840037777384891287, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  serializedVersion: 2
+  m_Quality: 0
+  m_UpdateWhenOffscreen: 0
+  m_SkinnedMotionVectors: 1
+  m_Mesh: {fileID: 0}
+  m_Bones:
+  - {fileID: 26180575803351326}
+  - {fileID: 8132663380852796779}
+  - {fileID: 6489390389115074994}
+  - {fileID: 2220287107439882528}
+  - {fileID: 1416638709573130913}
+  - {fileID: 7564619145421294372}
+  - {fileID: 7012933647698706564}
+  - {fileID: 4918497620970903786}
+  - {fileID: 1908880853881368834}
+  - {fileID: 5703198300421346530}
+  - {fileID: 5228525929651747440}
+  - {fileID: 2860582938659846074}
+  - {fileID: 5648979403426167687}
+  - {fileID: 4625546548481981492}
+  - {fileID: 1913506595756267429}
+  - {fileID: 2186727554852289329}
+  - {fileID: 57814905181582083}
+  - {fileID: 2862735326268870467}
+  - {fileID: 1650820675930909921}
+  - {fileID: 2661730895775995773}
+  - {fileID: 7046694349855445654}
+  - {fileID: 4511795673529982309}
+  - {fileID: 5076033624303997547}
+  - {fileID: 3314837249796071947}
+  - {fileID: 4038830428883918928}
+  - {fileID: 8785089568814897550}
+  - {fileID: 7399367974577098570}
+  - {fileID: 2959687943588548627}
+  - {fileID: 6966021180278746754}
+  - {fileID: 8330290649392348427}
+  - {fileID: 8469620237964978340}
+  - {fileID: 6815283176750593294}
+  - {fileID: 5023318809678182237}
+  - {fileID: 1812295774222438401}
+  - {fileID: 7638799325495216794}
+  - {fileID: 2962698026879974328}
+  - {fileID: 2256506770897515290}
+  - {fileID: 1923752864224083878}
+  - {fileID: 1481257526914081030}
+  - {fileID: 7141191336016693403}
+  - {fileID: 5080279390866719979}
+  - {fileID: 412849614729132897}
+  - {fileID: 2266356394842704542}
+  - {fileID: 3757862722127395868}
+  - {fileID: 7581925543751582102}
+  - {fileID: 1767526780402177177}
+  - {fileID: 1949539959088181958}
+  - {fileID: 4406497572638704875}
+  - {fileID: 1964475532313173511}
+  - {fileID: 7583713719955798144}
+  - {fileID: 5926740627905166577}
+  - {fileID: 3759490612252936939}
+  m_BlendShapeWeights: []
+  m_RootBone: {fileID: 26180575803351326}
+  m_AABB:
+    m_Center: {x: -0.000036656857, y: -0.20987952, z: 0.0090993345}
+    m_Extent: {x: 0.9452745, y: 0.8103515, z: 0.14502464}
+  m_DirtyAABB: 0
 --- !u!1 &15817302946363975
 GameObject:
   m_ObjectHideFlags: 0
@@ -129,7 +273,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 2
+  rigidWhileBraced: 1
+  stiffness: 1
 --- !u!153 &4685812489600138728
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -392,7 +537,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 5
+  rigidWhileBraced: 1
+  stiffness: 1
 --- !u!153 &7426695721329950742
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -688,6 +834,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
+  rigidWhileBraced: 1
   stiffness: 1
 --- !u!1 &1399682182040617306
 GameObject:
@@ -1041,7 +1188,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 3
+  rigidWhileBraced: 1
+  stiffness: 1
 --- !u!153 &119374681159369481
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -1371,7 +1519,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 0.8
+  rigidWhileBraced: 0
+  stiffness: 1.2
 --- !u!153 &9100377094833809855
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -1761,7 +1910,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 0.8
+  rigidWhileBraced: 0
+  stiffness: 2.2
 --- !u!153 &5430634929875185363
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -1874,6 +2024,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6072723743975416904}
   - component: {fileID: 8054828712832051766}
+  - component: {fileID: 8986361907852812489}
   m_Layer: 8
   m_Name: PlayerRagdoll
   m_TagString: Untagged
@@ -1897,6 +2048,8 @@ Transform:
   - {fileID: 1979642984960862861}
   - {fileID: 6558328555490747379}
   - {fileID: 26180575803351326}
+  - {fileID: 9197806646582965820}
+  - {fileID: 1487285669414959055}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &8054828712832051766
@@ -1921,6 +2074,24 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &8986361907852812489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4626503734970933764}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9c856dff956e96409d4e6c496298ee2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.RagdollViewParts
+  fullBody:
+  - {fileID: 4615686866909571105}
+  - {fileID: 7946546016461838708}
+  armsOnly:
+  - {fileID: 2580718668556152868}
+  - {fileID: 5134136673017647449}
 --- !u!1 &4678914636301607137
 GameObject:
   m_ObjectHideFlags: 0
@@ -2082,7 +2253,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 0.8
+  rigidWhileBraced: 0
+  stiffness: 2.2
 --- !u!153 &3284685704751567157
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -2346,7 +2518,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 1.6
+  rigidWhileBraced: 1
+  stiffness: 1
 --- !u!153 &4278859278832423982
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -2740,7 +2913,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 0.8
+  rigidWhileBraced: 0
+  stiffness: 1.2
 --- !u!153 &1153480939371362110
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -2941,7 +3115,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 0.9
+  rigidWhileBraced: 0
+  stiffness: 4
 --- !u!153 &2201076934284321538
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -3383,7 +3558,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 1.6
+  rigidWhileBraced: 1
+  stiffness: 1
 --- !u!153 &4762589639751656905
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -3613,6 +3789,150 @@ Transform:
   - {fileID: 1913506595756267429}
   m_Father: {fileID: 5703198300421346530}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7391115321831809729
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1487285669414959055}
+  - component: {fileID: 5134136673017647449}
+  m_Layer: 8
+  m_Name: Alpha_Surface_ArmsOnly
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1487285669414959055
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7391115321831809729}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6072723743975416904}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!137 &5134136673017647449
+SkinnedMeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7391115321831809729}
+  m_Enabled: 0
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 3
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: -4565884009001823619, guid: d4d1c43309ae9a342bc6eb176143aafe, type: 3}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  serializedVersion: 2
+  m_Quality: 0
+  m_UpdateWhenOffscreen: 0
+  m_SkinnedMotionVectors: 1
+  m_Mesh: {fileID: 0}
+  m_Bones:
+  - {fileID: 26180575803351326}
+  - {fileID: 8132663380852796779}
+  - {fileID: 6489390389115074994}
+  - {fileID: 2220287107439882528}
+  - {fileID: 1416638709573130913}
+  - {fileID: 7564619145421294372}
+  - {fileID: 7012933647698706564}
+  - {fileID: 4918497620970903786}
+  - {fileID: 1908880853881368834}
+  - {fileID: 5703198300421346530}
+  - {fileID: 5228525929651747440}
+  - {fileID: 2860582938659846074}
+  - {fileID: 5648979403426167687}
+  - {fileID: 4625546548481981492}
+  - {fileID: 1913506595756267429}
+  - {fileID: 2186727554852289329}
+  - {fileID: 57814905181582083}
+  - {fileID: 2862735326268870467}
+  - {fileID: 1650820675930909921}
+  - {fileID: 2661730895775995773}
+  - {fileID: 7046694349855445654}
+  - {fileID: 4511795673529982309}
+  - {fileID: 5076033624303997547}
+  - {fileID: 3314837249796071947}
+  - {fileID: 4038830428883918928}
+  - {fileID: 8785089568814897550}
+  - {fileID: 7399367974577098570}
+  - {fileID: 2959687943588548627}
+  - {fileID: 6966021180278746754}
+  - {fileID: 8330290649392348427}
+  - {fileID: 8469620237964978340}
+  - {fileID: 6815283176750593294}
+  - {fileID: 5023318809678182237}
+  - {fileID: 1812295774222438401}
+  - {fileID: 7638799325495216794}
+  - {fileID: 2962698026879974328}
+  - {fileID: 2256506770897515290}
+  - {fileID: 1923752864224083878}
+  - {fileID: 1481257526914081030}
+  - {fileID: 7141191336016693403}
+  - {fileID: 5080279390866719979}
+  - {fileID: 412849614729132897}
+  - {fileID: 2266356394842704542}
+  - {fileID: 3757862722127395868}
+  - {fileID: 7581925543751582102}
+  - {fileID: 1767526780402177177}
+  - {fileID: 1949539959088181958}
+  - {fileID: 4406497572638704875}
+  - {fileID: 1964475532313173511}
+  - {fileID: 7583713719955798144}
+  - {fileID: 5926740627905166577}
+  - {fileID: 3759490612252936939}
+  m_BlendShapeWeights: []
+  m_RootBone: {fileID: 26180575803351326}
+  m_AABB:
+    m_Center: {x: -0.000036746264, y: -0.13112509, z: 0.011433661}
+    m_Extent: {x: 0.973426, y: 0.93783796, z: 0.19394961}
+  m_DirtyAABB: 0
 --- !u!1 &7515916927074728167
 GameObject:
   m_ObjectHideFlags: 0
@@ -3775,7 +4095,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 2
+  rigidWhileBraced: 1
+  stiffness: 1
 --- !u!153 &2312137253546308736
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -4038,7 +4359,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 1.2
+  rigidWhileBraced: 1
+  stiffness: 1
 --- !u!153 &5962000455142295402
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -4508,7 +4830,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 1.2
+  rigidWhileBraced: 1
+  stiffness: 1
 --- !u!153 &8845156449658859418
 ConfigurableJoint:
   m_ObjectHideFlags: 0
@@ -4709,7 +5032,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  stiffness: 0.9
+  rigidWhileBraced: 0
+  stiffness: 4
 --- !u!153 &4319636641591003858
 ConfigurableJoint:
   m_ObjectHideFlags: 0

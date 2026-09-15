@@ -19,8 +19,10 @@ namespace HoldMyBeer.Editor
         private readonly struct BoneSpec
         {
             private BoneSpec(string bone, string parent, float mass, float radius,
-                             Vector3 boxSize, Vector3 boxCenter, bool isBox, float stiffness)
+                             Vector3 boxSize, Vector3 boxCenter, bool isBox, float stiffness,
+                             bool rigidWhileBraced)
             {
+                RigidWhileBraced = rigidWhileBraced;
                 Bone = bone;
                 Parent = parent;
                 Mass = mass;
@@ -42,49 +44,53 @@ namespace HoldMyBeer.Editor
             /// <summary>Multiplies the rig-wide spring. High = holds its pose, low = wobbles.</summary>
             public float Stiffness { get; }
 
+            /// <summary>Pinned to the animated pose while the player is on their feet.</summary>
+            public bool RigidWhileBraced { get; }
+
             /// <summary>A limb: a capsule whose length is measured from the child bone.</summary>
             public static BoneSpec Capsule(string bone, string parent, float mass, float radius,
-                                           float stiffness)
-                => new(bone, parent, mass, radius, Vector3.zero, Vector3.zero, false, stiffness);
+                                           float stiffness, bool rigidWhileBraced)
+                => new(bone, parent, mass, radius, Vector3.zero, Vector3.zero, false, stiffness,
+                       rigidWhileBraced);
 
             /// <summary>A torso or foot: a box, since no single axis describes it.</summary>
             public static BoneSpec Box(string bone, string parent, float mass,
-                                       Vector3 size, Vector3 center, float stiffness)
-                => new(bone, parent, mass, 0f, size, center, true, stiffness);
+                                       Vector3 size, Vector3 center, float stiffness,
+                                       bool rigidWhileBraced)
+                => new(bone, parent, mass, 0f, size, center, true, stiffness, rigidWhileBraced);
         }
 
-        // The classic 13-body humanoid ragdoll. Masses total roughly 70 units;
-        // absolute values matter less than their ratios.
+        // Trunk and legs are pinned: they must not lag behind the player by so much as
+        // a frame. Only the arms are simulated, and their stiffness FALLS from shoulder
+        // to hand, so the swing grows towards the fingers the way a real arm does.
+        //
+        // Masses total roughly 70 units; their ratios matter more than the absolutes.
         private static readonly BoneSpec[] Bones =
         {
             BoneSpec.Box("mixamorig:Hips", null, 12f,
-                new Vector3(0.28f, 0.20f, 0.22f), new Vector3(0f, 0.04f, 0f), 1f),
+                new Vector3(0.28f, 0.20f, 0.22f), new Vector3(0f, 0.04f, 0f), 1f, true),
             BoneSpec.Box("mixamorig:Spine1", "mixamorig:Hips", 16f,
-                new Vector3(0.34f, 0.28f, 0.22f), new Vector3(0f, 0.12f, 0f), 5f),
-            BoneSpec.Capsule("mixamorig:Head", "mixamorig:Spine1", 5f, 0.10f, 3f),
-            BoneSpec.Capsule("mixamorig:LeftUpLeg", "mixamorig:Hips", 7f, 0.09f, 2f),
-            BoneSpec.Capsule("mixamorig:LeftLeg", "mixamorig:LeftUpLeg", 4f, 0.07f, 1.6f),
+                new Vector3(0.34f, 0.28f, 0.22f), new Vector3(0f, 0.12f, 0f), 1f, true),
+            BoneSpec.Capsule("mixamorig:Head", "mixamorig:Spine1", 5f, 0.10f, 1f, true),
+            BoneSpec.Capsule("mixamorig:LeftUpLeg", "mixamorig:Hips", 7f, 0.09f, 1f, true),
+            BoneSpec.Capsule("mixamorig:LeftLeg", "mixamorig:LeftUpLeg", 4f, 0.07f, 1f, true),
             BoneSpec.Box("mixamorig:LeftFoot", "mixamorig:LeftLeg", 1f,
-                new Vector3(0.09f, 0.19f, 0.10f), new Vector3(0f, 0.08f, 0f), 1.2f),
-            BoneSpec.Capsule("mixamorig:RightUpLeg", "mixamorig:Hips", 7f, 0.09f, 2f),
-            BoneSpec.Capsule("mixamorig:RightLeg", "mixamorig:RightUpLeg", 4f, 0.07f, 1.6f),
+                new Vector3(0.09f, 0.19f, 0.10f), new Vector3(0f, 0.08f, 0f), 1f, true),
+            BoneSpec.Capsule("mixamorig:RightUpLeg", "mixamorig:Hips", 7f, 0.09f, 1f, true),
+            BoneSpec.Capsule("mixamorig:RightLeg", "mixamorig:RightUpLeg", 4f, 0.07f, 1f, true),
             BoneSpec.Box("mixamorig:RightFoot", "mixamorig:RightLeg", 1f,
-                new Vector3(0.09f, 0.19f, 0.10f), new Vector3(0f, 0.08f, 0f), 1.2f),
+                new Vector3(0.09f, 0.19f, 0.10f), new Vector3(0f, 0.08f, 0f), 1f, true),
 
-            // The arms stay the loosest bones on the body — six times softer than the
-            // spine — because they are what the player actually watches. Softer than
-            // this and they hang so far below their IK goal that they leave the frame.
-            BoneSpec.Capsule("mixamorig:LeftArm", "mixamorig:Spine1", 2.5f, 0.06f, 0.9f),
-            BoneSpec.Capsule("mixamorig:LeftForeArm", "mixamorig:LeftArm", 1.5f, 0.05f, 0.8f),
-            BoneSpec.Capsule("mixamorig:RightArm", "mixamorig:Spine1", 2.5f, 0.06f, 0.9f),
-            BoneSpec.Capsule("mixamorig:RightForeArm", "mixamorig:RightArm", 1.5f, 0.05f, 0.8f),
+            // Shoulder nearly solid, elbow looser, hand loosest.
+            BoneSpec.Capsule("mixamorig:LeftArm", "mixamorig:Spine1", 2.5f, 0.06f, 4f, false),
+            BoneSpec.Capsule("mixamorig:LeftForeArm", "mixamorig:LeftArm", 1.5f, 0.05f, 2.2f, false),
+            BoneSpec.Capsule("mixamorig:RightArm", "mixamorig:Spine1", 2.5f, 0.06f, 4f, false),
+            BoneSpec.Capsule("mixamorig:RightForeArm", "mixamorig:RightArm", 1.5f, 0.05f, 2.2f, false),
 
-            // Hands earn a body of their own so a carried item hangs off something
-            // physical, and so there is one more segment wobbling at the end of the arm.
             BoneSpec.Box("mixamorig:LeftHand", "mixamorig:LeftForeArm", 0.5f,
-                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f), 0.8f),
+                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f), 1.2f, false),
             BoneSpec.Box("mixamorig:RightHand", "mixamorig:RightForeArm", 0.5f,
-                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f), 0.8f)
+                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f), 1.2f, false)
         };
 
         [MenuItem("Tools/Hold My Beer/Rebuild Player Ragdoll", priority = 41)]
@@ -100,6 +106,7 @@ namespace HoldMyBeer.Editor
             }
 
             RequireUnoptimizedHierarchy();
+            EnsureMeshIsReadable();
 
             var root = (GameObject)PrefabUtility.InstantiatePrefab(model);
             root.name = "PlayerRagdoll";
@@ -138,6 +145,7 @@ namespace HoldMyBeer.Editor
                 bone.gameObject.AddComponent<WobbleBoneTuning>();
                 var tuningSerialized = new SerializedObject(bone.GetComponent<WobbleBoneTuning>());
                 tuningSerialized.FindProperty("stiffness").floatValue = spec.Stiffness;
+                tuningSerialized.FindProperty("rigidWhileBraced").boolValue = spec.RigidWhileBraced;
                 tuningSerialized.ApplyModifiedPropertiesWithoutUndo();
 
                 if (spec.Parent == null)
@@ -170,6 +178,8 @@ namespace HoldMyBeer.Editor
                 joint.enablePreprocessing = false;
             }
 
+            BuildOwnerArmsView(root);
+
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             Object.DestroyImmediate(root);
 
@@ -191,6 +201,68 @@ namespace HoldMyBeer.Editor
                     $"'{ModelPath}' has Optimize Game Objects enabled, which strips the " +
                     "bone hierarchy the ragdoll needs. Turn it off in the model Rig " +
                     "import settings and re-import.");
+            }
+        }
+
+        /// <summary>
+        /// The arms-only view is filtered from the mesh at runtime, which needs CPU
+        /// access to it, and Unity leaves that off by default. Turned on here rather
+        /// than asked of the artist, since the code is what depends on it.
+        /// </summary>
+        private static void EnsureMeshIsReadable()
+        {
+            if (AssetImporter.GetAtPath(ModelPath) is not ModelImporter importer || importer.isReadable)
+            {
+                return;
+            }
+
+            importer.isReadable = true;
+            importer.SaveAndReimport();
+        }
+
+        /// <summary>
+        /// Creates the second renderer the owner sees. Its mesh is deliberately left
+        /// empty here and filled at runtime: a mesh built and referenced inside one
+        /// editor frame does not survive serialisation into the prefab, and it fails
+        /// silently — an enabled, visible renderer made of nothing.
+        /// </summary>
+        private static void BuildOwnerArmsView(GameObject root)
+        {
+            var fullBody = new List<SkinnedMeshRenderer>();
+            var armsOnly = new List<SkinnedMeshRenderer>();
+
+            foreach (var source in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                fullBody.Add(source);
+
+                var holder = new GameObject($"{source.name}_ArmsOnly");
+                holder.transform.SetParent(source.transform.parent, false);
+                holder.layer = source.gameObject.layer;
+
+                var copy = holder.AddComponent<SkinnedMeshRenderer>();
+                copy.sharedMaterials = source.sharedMaterials;
+                copy.bones = source.bones;
+                copy.rootBone = source.rootBone;
+                copy.localBounds = source.localBounds;
+                copy.enabled = false;
+
+                armsOnly.Add(copy);
+            }
+
+            var parts = root.AddComponent<RagdollViewParts>();
+            var serialized = new SerializedObject(parts);
+            WriteRendererArray(serialized.FindProperty("fullBody"), fullBody);
+            WriteRendererArray(serialized.FindProperty("armsOnly"), armsOnly);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void WriteRendererArray(SerializedProperty property,
+                                               List<SkinnedMeshRenderer> values)
+        {
+            property.arraySize = values.Count;
+            for (var i = 0; i < values.Count; i++)
+            {
+                property.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
             }
         }
 

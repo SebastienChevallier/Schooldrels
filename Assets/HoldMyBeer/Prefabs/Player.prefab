@@ -117,7 +117,7 @@ Transform:
   m_GameObject: {fileID: 1286872129561401121}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.45, z: 0.16}
+  m_LocalPosition: {x: 0, y: 1.45, z: 0.04}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -202,7 +202,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3331293727
+  GlobalObjectIdHash: 594270643
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -346,8 +346,8 @@ MonoBehaviour:
   wobbleRig: {fileID: 4824284488807518293}
   ikDriver: {fileID: 2741264147316404150}
   settings:
-    restOffset: {x: 0.2, y: 0.3, z: 0.58}
-    carryOffset: {x: 0.17, y: 0.34, z: 0.56}
+    restOffset: {x: 0.2, y: -0.07, z: 0.38}
+    carryOffset: {x: 0.17, y: 0, z: 0.4}
     restWeight: 0.65
     carryWeight: 0.9
     reachWeight: 0.85

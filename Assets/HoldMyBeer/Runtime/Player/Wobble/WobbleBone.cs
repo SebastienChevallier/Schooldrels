@@ -25,9 +25,12 @@ namespace HoldMyBeer.Player.Wobble
         private float _appliedMaxForce = -1f;
 
         private readonly float _stiffness;
+        private bool _rigid;
 
-        public WobbleBone(Rigidbody body, ConfigurableJoint joint, Transform animated, float stiffness)
+        public WobbleBone(Rigidbody body, ConfigurableJoint joint, Transform animated,
+                          float stiffness, bool rigidWhileBraced)
         {
+            RigidWhileBraced = rigidWhileBraced;
             Body = body;
             _joint = joint;
             _physical = body.transform;
@@ -47,6 +50,41 @@ namespace HoldMyBeer.Player.Wobble
 
         public Rigidbody Body { get; }
         public Transform Animated => _animated;
+
+        /// <summary>Trunk and legs: pinned rather than sprung while the player is upright.</summary>
+        public bool RigidWhileBraced { get; }
+
+        /// <summary>
+        /// Switches a bone between pinned and simulated. Velocity is cleared on the way
+        /// back to dynamic: a body that was kinematic has stale momentum, and letting it
+        /// through is how a collapse turns into a launch.
+        /// </summary>
+        public void SetRigid(bool rigid)
+        {
+            if (_rigid == rigid)
+            {
+                return;
+            }
+
+            _rigid = rigid;
+            Body.isKinematic = rigid;
+
+            if (!rigid)
+            {
+                Body.linearVelocity = Vector3.zero;
+                Body.angularVelocity = Vector3.zero;
+            }
+        }
+
+        /// <summary>
+        /// Pins the bone straight onto its animated counterpart. MovePosition rather
+        /// than the transform, so interpolation still smooths it between fixed steps.
+        /// </summary>
+        public void DriveKinematic()
+        {
+            Body.MovePosition(_animated.position);
+            Body.MoveRotation(_animated.rotation);
+        }
 
         /// <summary>
         /// Pushes the animated pose into the joint drive target, converted into joint

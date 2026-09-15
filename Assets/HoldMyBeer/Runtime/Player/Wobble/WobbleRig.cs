@@ -26,6 +26,9 @@ namespace HoldMyBeer.Player.Wobble
         private Transform _animatedPelvis;
         private float _targetTension = 1f;
         private bool _rootSlavedToPelvis;
+        private bool _braced;
+        private bool _pinningApplied;
+        private RagdollViewParts _viewParts;
 
         public bool IsBuilt => _ragdollInstance != null;
 
@@ -106,6 +109,8 @@ namespace HoldMyBeer.Player.Wobble
             _bones.Clear();
             _pelvis = null;
             _animatedPelvis = null;
+            _pinningApplied = false;
+            _viewParts = null;
             LeftHand = null;
             RightHand = null;
             _solver = null;
@@ -132,6 +137,20 @@ namespace HoldMyBeer.Player.Wobble
             }
         }
 
+        /// <summary>
+        /// Owners see only their own arms; everyone else sees the whole body. Driven by
+        /// swapping renderers, never by scaling bones — a scaled bone carrying a
+        /// Rigidbody, a collider and a joint degenerates its inertia tensor, which once
+        /// made the head deviate 156 degrees from its target instead of 19.
+        /// </summary>
+        public void SetOwnerView(bool ownerView)
+        {
+            if (_viewParts != null)
+            {
+                _viewParts.SetOwnerView(ownerView);
+            }
+        }
+
         // The head used to be scaled to nothing for the owner, back when the camera sat
         // at eye level. That bone carries a Rigidbody, a collider and a joint, and a
         // 1e-4 scale degenerates its inertia tensor: measured, it made the head deviate
@@ -155,8 +174,10 @@ namespace HoldMyBeer.Player.Wobble
 
                 var tuning = joint.GetComponent<WobbleBoneTuning>();
                 var stiffness = tuning != null ? tuning.Stiffness : 1f;
+                var rigid = tuning != null && tuning.RigidWhileBraced;
 
-                _bones.Add(new WobbleBone(joint.GetComponent<Rigidbody>(), joint, animated, stiffness));
+                _bones.Add(new WobbleBone(
+                    joint.GetComponent<Rigidbody>(), joint, animated, stiffness, rigid));
             }
 
             // The pelvis has no joint, so it is not in the loop above. It is the bone
@@ -177,6 +198,8 @@ namespace HoldMyBeer.Player.Wobble
             {
                 Debug.LogError($"[Hold My Beer] Animated rig has no '{PelvisBone}' bone.");
             }
+
+            _viewParts = _ragdollInstance.GetComponent<RagdollViewParts>();
 
             LeftHand = FindBody(LeftHandBone);
             RightHand = FindBody(RightHandBone);
@@ -208,12 +231,35 @@ namespace HoldMyBeer.Player.Wobble
 
         private void FixedUpdate()
         {
-            if (!IsBuilt || _pelvis == null)
+            if (!IsBuilt || _pelvis == null || _animatedPelvis == null)
             {
                 return;
             }
 
             var tension = _solver.Tick(_targetTension, Time.fixedDeltaTime);
+            var braced = !_solver.IsCollapsed;
+
+            ApplyPinning(braced);
+
+            if (braced)
+            {
+                // Pinned, not sprung. Any lag in the trunk reads as the whole character
+                // sliding behind the player, and a spring lags by definition — however
+                // stiff you make it. Only the arms are left to physics.
+                _pelvis.MovePosition(_animatedPelvis.position);
+                _pelvis.MoveRotation(_animatedPelvis.rotation);
+            }
+            else
+            {
+                // The pelvis has no joint, so it is not a WobbleBone and would otherwise
+                // be the one body never clamped — while being the only one pushed directly.
+                WobbleBone.ClampBody(_pelvis, settings.MaxBoneSpeed, settings.MaxBoneAngularSpeed,
+                    SnapToAnimatedPose);
+
+                TowPelvis(tension);
+                UprightPelvis(tension);
+            }
+
             var spring = _solver.CurrentSpring;
             var damper = _solver.CurrentDamper;
             var maxForce = _solver.CurrentMaxForce;
@@ -221,18 +267,46 @@ namespace HoldMyBeer.Player.Wobble
             foreach (var bone in _bones)
             {
                 bone.MatchAnimatedRotation();
+
+                if (braced && bone.RigidWhileBraced)
+                {
+                    bone.DriveKinematic();
+                    continue;
+                }
+
                 bone.ApplyTension(spring, damper, maxForce);
                 bone.ClampVelocity(settings.MaxBoneSpeed, settings.MaxBoneAngularSpeed);
             }
 
-            // The pelvis has no joint, so it is not a WobbleBone and would otherwise be
-            // the one body never clamped — while being the only one we push directly.
-            WobbleBone.ClampBody(_pelvis, settings.MaxBoneSpeed, settings.MaxBoneAngularSpeed,
-                SnapToAnimatedPose);
-
-            TowPelvis(tension);
-            UprightPelvis(tension);
             RunWatchdog();
+        }
+
+        /// <summary>
+        /// Flips the trunk between pinned and simulated. Collapsing has to release
+        /// everything or the ragdoll would fall with a rigid torso, which looks like a
+        /// falling statue rather than a person.
+        /// </summary>
+        private void ApplyPinning(bool braced)
+        {
+            if (_pinningApplied && _braced == braced)
+            {
+                return;
+            }
+
+            _pinningApplied = true;
+            _braced = braced;
+
+            _pelvis.isKinematic = braced;
+            if (!braced)
+            {
+                _pelvis.linearVelocity = Vector3.zero;
+                _pelvis.angularVelocity = Vector3.zero;
+            }
+
+            foreach (var bone in _bones)
+            {
+                bone.SetRigid(braced && bone.RigidWhileBraced);
+            }
         }
 
         /// <summary>

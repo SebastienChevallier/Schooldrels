@@ -176,9 +176,10 @@ namespace HoldMyBeer.Editor
             pivot.transform.SetParent(root.transform, false);
 
             // Sternum height rather than eye height, so the arms stay in frame instead
-            // of hanging below it. Pushed forward as well: at chest height the camera
-            // would otherwise sit inside the torso collider and render its interior.
-            pivot.transform.localPosition = new Vector3(0f, 1.45f, 0.16f);
+            // of hanging below it. Barely pushed forward: every centimetre here is a
+            // centimetre of arm reach lost, and it is the near clip plane below that
+            // deals with the chest, not this offset.
+            pivot.transform.localPosition = new Vector3(0f, 1.45f, 0.04f);
 
             var cameraObject = new GameObject("PlayerCamera", typeof(Camera), typeof(AudioListener));
             cameraObject.tag = "MainCamera";
