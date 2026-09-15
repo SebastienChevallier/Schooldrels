@@ -278,6 +278,17 @@ L'invite affichée vient de `CanApply`, publiée dans `IInteractionPrompt` et lu
 **Un objet de jeu répliqué** → prefab + `NetworkObject`, ajouté à la
 `NetworkPrefabsList`, spawné **par le serveur** avec `.Spawn()`.
 
+**Une nouvelle bêtise sur un objet fixe** (alarme, tableau…) → aucun code : un prefab
+`PrankTarget` réglé (réput', rayon de bruit, 0 = silencieux, cooldown) dans `SchoolPrefabs`,
+ajouté à la liste réseau et placé dans `NetworkPropSpawner`. `PrankRule` les gère tous.
+Une bêtise avec une logique propre (le pétard) publie un `MischiefReport` sur le `MischiefBus` :
+`DayState` le crédite, les `Supervisor` l'entendent, sans se connaître.
+
+**La boucle de journée** : faire une bêtise donne de la réput' *non postée* et rend l'élève
+*recherché* quelques secondes. Un adulte qui le voit alors le poursuit ; attrapé, il part au
+bureau du CPE et perd sa réput' non postée. Seul `UploadSpot` (toilettes) la rend définitive.
+À la sonnerie, réput' d'équipe ≥ quota → jour suivant (quota ×1.5), sinon retour au jour 1.
+
 **Une politique de spawn différente** → implémenter `ISpawnPointProvider` ;
 `PlayerSpawner` n'a pas à changer.
 
@@ -336,7 +347,14 @@ tension unique pour l'effondrement et le relevé, mains en IK dont le ballotteme
 piloté par la rotation de la vue, vue première personne bras seuls et visibles
 uniquement quand on porte quelque chose, objets attrapables et lançables avec une charge
 au maintien du clic, HUD de visée avec invite et jauge de charge, registre
-d'interactions contextuelles.
+d'interactions contextuelles. Proto « lycée » : greybox (couloir, 2 salles, WC, bureau CPE),
+journée chronométrée avec quota, réput' à poster, surveillant (ronde, vue, ouïe, poursuite,
+colle), alarme incendie, tableau à taguer, pétards, HUD de journée et écran LOOSER.
+
+Le surveillant se déplace sur un NavMesh construit au chargement de la scène
+(`RuntimeNavMeshBuilder` sur la racine `School`, via AI Navigation) : tout collider
+enfant de `School` compte comme obstacle ou sol. Limite du proto : un joueur collé pendant qu'il est en ragdoll
+n'est pas téléporté (la racine suit le bassin).
 
 Manque de contenu, pas de code : `AC_Player` n'a ni idle ni locomotion. Un idle de
 repli est généré (`_ART/Player/Animation/IdleFallback.anim`) pour que le rig ne

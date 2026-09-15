@@ -1,6 +1,8 @@
 using HoldMyBeer.Core;
 using HoldMyBeer.Gameplay;
+using HoldMyBeer.Gameplay.Day;
 using HoldMyBeer.Gameplay.Interaction;
+using HoldMyBeer.Gameplay.Pranks;
 using HoldMyBeer.Interaction;
 using HoldMyBeer.Networking;
 using Unity.Netcode;
@@ -156,15 +158,22 @@ namespace HoldMyBeer.App
             // order IS the priority, and the first rule that accepts wins. Insert new
             // game rules between these two — ThrowRule accepts anything held, so
             // nothing registered after it would ever run.
+            var mischief = new MischiefBus();
+            var day = new DayStateProvider();
+            container.Register(mischief);
+            container.Register<IDayStateProvider>(day);
+
             var interactions = new InteractionRegistry();
             interactions.AddRule(new GrabRule(maxGrabReach));
+            interactions.AddRule(new UploadRule(day, maxGrabReach));
+            interactions.AddRule(new PrankRule(maxGrabReach));
             interactions.AddRule(new ThrowRule(minThrowImpulse, maxThrowImpulse, throwLob, handThrowInfluence));
 
             container.Register<IInteractionRegistry>(interactions);
             container.Register<IInteractionPrompt>(new InteractionPrompt());
             container.Register<IHeldItemTracker>(new HeldItemTracker());
             container.Register<IInteractionContext>(
-                new ServerInteractionContext(networkManager, maxThrowSpeed));
+                new ServerInteractionContext(networkManager, maxThrowSpeed, mischief, day));
         }
 
         private bool ValidateReferences()

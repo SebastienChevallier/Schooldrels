@@ -6,7 +6,9 @@
         "HoldMyBeer.Networking",
         "Unity.Netcode.Runtime",
         "HoldMyBeer.Interaction",
-        "Unity.Netcode.Components"
+        "Unity.Netcode.Components",
+        "Unity.Collections",
+        "Unity.AI.Navigation"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

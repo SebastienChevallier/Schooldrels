@@ -12,7 +12,8 @@
         "Unity.Networking.Transport",
         "HoldMyBeer.App",
         "UnityEngine.UI",
-        "HoldMyBeer.Interaction"
+        "HoldMyBeer.Interaction",
+        "Unity.AI.Navigation"
     ],
     "includePlatforms": [
         "Editor"

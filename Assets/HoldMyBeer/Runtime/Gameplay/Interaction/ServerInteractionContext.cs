@@ -1,3 +1,4 @@
+using HoldMyBeer.Gameplay.Day;
 using HoldMyBeer.Interaction;
 using Unity.Netcode;
 using UnityEngine;
@@ -13,11 +14,29 @@ namespace HoldMyBeer.Gameplay.Interaction
     {
         private readonly NetworkManager _networkManager;
         private readonly float _maxThrowSpeed;
+        private readonly MischiefBus _mischief;
+        private readonly IDayStateProvider _day;
 
-        public ServerInteractionContext(NetworkManager networkManager, float maxThrowSpeed)
+        public ServerInteractionContext(NetworkManager networkManager, float maxThrowSpeed, MischiefBus mischief,
+                                        IDayStateProvider day)
         {
             _networkManager = networkManager;
             _maxThrowSpeed = maxThrowSpeed;
+            _mischief = mischief;
+            _day = day;
+        }
+
+        public void ReportMischief(in MischiefReport report)
+        {
+            if (_networkManager.IsServer)
+            {
+                _mischief.Publish(in report);
+            }
+        }
+
+        public bool BankReputation(ulong clientId)
+        {
+            return _networkManager.IsServer && _day.Current is DayState day && day.Bank(clientId);
         }
 
         public bool Hold(IGrabbable item, ulong clientId, HandSide hand)

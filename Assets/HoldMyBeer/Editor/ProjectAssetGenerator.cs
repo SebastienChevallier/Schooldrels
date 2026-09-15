@@ -44,6 +44,7 @@ namespace HoldMyBeer.Editor
         private const string GrabbablePrefabPath = PrefabsFolder + "/Grabbable.prefab";
         private const string FallbackIdleClipPath = ArtFolder + "/Animation/IdleFallback.anim";
 
+
         private const int MaxPlayers = 8;
 
         [MenuItem("Tools/Hold My Beer/Generate Project Assets", priority = 0)]
@@ -57,14 +58,17 @@ namespace HoldMyBeer.Editor
             var playerPrefab = CreatePlayerPrefab(ragdollPrefab);
             var lobbyPrefab = CreateLobbyPrefab();
             var grabbablePrefab = CreateGrabbablePrefab();
+            var school = SchoolPrefabs.Create();
 
             // The ragdoll is absent on purpose: it is instantiated locally by every
             // client, never spawned by NGO, so listing it would be wrong.
-            var prefabsList = CreateNetworkPrefabsList(playerPrefab, lobbyPrefab, grabbablePrefab);
+            var prefabsList = CreateNetworkPrefabsList(playerPrefab, lobbyPrefab, grabbablePrefab,
+                school.DayState, school.Supervisor, school.FireAlarm, school.Blackboard, school.UploadSpot,
+                school.Firecracker);
 
             CreateBootScene(playerPrefab, lobbyPrefab, prefabsList);
             CreateMenuScene();
-            CreateGameScene();
+            CreateGameScene(school);
 
             RegisterBuildScenes();
 
@@ -210,6 +214,7 @@ namespace HoldMyBeer.Editor
             wobbleSerialized.ApplyModifiedPropertiesWithoutUndo();
 
             root.AddComponent<PlayerRagdollState>();
+            root.AddComponent<PlayerTeleporter>();
 
             var hands = root.AddComponent<PlayerHands>();
             var handsSerialized = new SerializedObject(hands);
@@ -438,7 +443,7 @@ namespace HoldMyBeer.Editor
             EditorSceneManager.SaveScene(scene, ScenePath(SceneNames.Menu));
         }
 
-        private static void CreateGameScene()
+        private static void CreateGameScene(SchoolPrefabs school)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -452,28 +457,65 @@ namespace HoldMyBeer.Editor
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Ground";
             ground.transform.localScale = new Vector3(6f, 1f, 6f);
+            ground.GetComponent<Renderer>().sharedMaterial = SchoolPrefabs.Material("Floor", new Color(0.55f, 0.52f, 0.47f));
 
+            SchoolBuilder.BuildWalls(ground);
+
+            // Players start at the west end of the corridor, facing the length of it.
             var spawnRoot = new GameObject("SpawnPoints");
             for (var i = 0; i < MaxPlayers; i++)
             {
-                var angle = i * (360f / MaxPlayers) * Mathf.Deg2Rad;
                 var point = new GameObject($"SpawnPoint_{i}");
                 point.transform.SetParent(spawnRoot.transform, false);
-                point.transform.position = new Vector3(Mathf.Cos(angle) * 5f, 0.1f, Mathf.Sin(angle) * 5f);
-                point.transform.rotation = Quaternion.LookRotation(
-                    new Vector3(-point.transform.position.x, 0f, -point.transform.position.z).normalized,
-                    Vector3.up);
+                point.transform.position = new Vector3(-18f + (i / 2) * 1.5f, 0.1f, i % 2 == 0 ? -1f : 1f);
+                point.transform.rotation = Quaternion.LookRotation(Vector3.right, Vector3.up);
             }
 
             spawnRoot.AddComponent<SpawnPointRegistry>();
             new GameObject("GameSceneBootstrap").AddComponent<GameSceneBootstrap>();
 
             new GameObject("CrosshairHud").AddComponent<CrosshairHud>();
+            new GameObject("DayHud").AddComponent<DayHud>();
+
+            SchoolBuilder.BuildLayout();
+
+            var props = new GameObject("NetworkProps").AddComponent<NetworkPropSpawner>();
+            var placements = new List<(GameObject prefab, Vector3 position, Quaternion rotation)>
+            {
+                (school.DayState, Vector3.zero, Quaternion.identity),
+                (school.Supervisor, new Vector3(17f, 0.1f, 0f), Quaternion.LookRotation(Vector3.left)),
+                (school.FireAlarm, new Vector3(0f, 1.4f, 1.82f), Quaternion.identity),
+                (school.Blackboard, new Vector3(-8f, 1.6f, 11.82f), Quaternion.identity),
+                (school.Blackboard, new Vector3(8f, 1.6f, 11.82f), Quaternion.identity),
+                (school.UploadSpot, new Vector3(-2f, 1.2f, -7.82f), Quaternion.identity),
+                (school.Firecracker, new Vector3(7.6f, 1f, 8.5f), Quaternion.identity),
+                (school.Firecracker, new Vector3(8.3f, 1f, 8.5f), Quaternion.identity),
+                (school.Firecracker, new Vector3(-11f, 1f, 4f), Quaternion.identity)
+            };
+
+            var serializedProps = new SerializedObject(props);
+            var array = serializedProps.FindProperty("placements");
+            array.arraySize = placements.Count;
+            for (var i = 0; i < placements.Count; i++)
+            {
+                var marker = new GameObject($"Prop_{i}_{placements[i].prefab.name}");
+                marker.transform.SetParent(props.transform, false);
+                marker.transform.SetPositionAndRotation(placements[i].position, placements[i].rotation);
+
+                var element = array.GetArrayElementAtIndex(i);
+                element.FindPropertyRelative("prefab").objectReferenceValue = placements[i].prefab;
+                element.FindPropertyRelative("marker").objectReferenceValue = marker.transform;
+            }
+
+            serializedProps.ApplyModifiedPropertiesWithoutUndo();
 
             var grabbableSpawner = new GameObject("GrabbableSpawner").AddComponent<GrabbableSpawner>();
+            grabbableSpawner.transform.position = new Vector3(8f, 0f, 6f);
             var spawnerSerialized = new SerializedObject(grabbableSpawner);
             spawnerSerialized.FindProperty("grabbablePrefab").objectReferenceValue =
                 AssetDatabase.LoadAssetAtPath<GameObject>(GrabbablePrefabPath);
+            spawnerSerialized.FindProperty("count").intValue = 4;
+            spawnerSerialized.FindProperty("radius").floatValue = 2f;
             spawnerSerialized.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath(SceneNames.Game));

@@ -139,6 +139,7 @@ GameObject:
   - component: {fileID: 6260207762719212848}
   - component: {fileID: 4824284488807518293}
   - component: {fileID: 4429776244827522130}
+  - component: {fileID: 2093801058898848662}
   - component: {fileID: 332166430031694956}
   - component: {fileID: 3373257258724891178}
   m_Layer: 0
@@ -202,7 +203,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3783213676
+  GlobalObjectIdHash: 3432077928
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -330,6 +331,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.PlayerRagdollState
   ShowTopMostFoldoutHeaderGroup: 1
   automaticRecoveryDelay: 2
+--- !u!114 &2093801058898848662
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2333332092169759779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 762cd95508e07284ca341528dd5cb016, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.PlayerTeleporter
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &332166430031694956
 MonoBehaviour:
   m_ObjectHideFlags: 0

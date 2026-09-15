@@ -23,5 +23,14 @@ namespace HoldMyBeer.Interaction
         bool Release(IGrabbable item, Vector3 position, Quaternion rotation, Vector3 velocity);
 
         void Despawn(IGrabbable item);
+
+        /// <summary>Credits the prank and makes it audible to the adults nearby.</summary>
+        void ReportMischief(in MischiefReport report);
+
+        /// <summary>
+        /// Turns a player's unposted reputation into team reputation. False when there
+        /// was nothing to post or no school day is running.
+        /// </summary>
+        bool BankReputation(ulong clientId);
     }
 }
