@@ -109,30 +109,53 @@ ordinaires, à committer et à éditer normalement.
 
 ---
 
-### Le ragdoll est cosmétique, la tension est l'état
+### Le ragdoll ne sert qu'à tomber ; le ballottement vient de la vue
 
-Le corps ballotte parce que chaque os physique est tiré vers sa pose animée par un
-drive en ressort, dont la raideur suit un scalaire unique `tension ∈ [0,1]`. À 1 le
-corps est presque rigide, à 0 c'est un ragdoll complet — il n'y a donc pas de
-transition à écrire entre « debout » et « effondré », seulement une valeur qui descend
-puis remonte.
+Tant que le joueur est debout, **tous les os sont épinglés** (`isKinematic`) sur la
+pose animée. Rien ne traîne derrière le joueur, ni le torse, ni les bras. Un ressort,
+aussi raide soit-il, retarde par définition — c'est ce qu'est un ressort — donc il n'y
+en a plus aucun dans le chemin « debout ».
+
+Le ballottement est produit ailleurs, et c'est la décision centrale : **la cible IK des
+mains suit la POSITION de la vue instantanément et sa ROTATION avec du retard.**
+Tourner la tête fait balayer les bras en travers de l'écran ; marcher ne les fait pas
+traîner. Un plafond d'angle (`MaxSwayAngle`) empêche une volte-face de renvoyer les
+bras derrière les épaules, où l'IK replierait les coudes à travers le torse.
+
+Mesuré : une translation de trois mètres laisse la main **au millimètre près** au même
+endroit dans le repère de vue ; un virage de 70° la fait balayer 50 cm en travers de
+l'écran avant qu'elle ne rattrape.
+
+La physique ne reprend la main qu'à l'effondrement : sous le seuil de tension, tous les
+os repassent en dynamique et on retrouve un vrai ragdoll. C'est aussi pour ça que la
+tension reste un scalaire unique — elle décrit maintenant « épinglé ou simulé » autant
+que « raide ou mou ».
 
 **Aucun os ne transite sur le réseau.** Chaque client simule le ragdoll de tous les
-avatars, et les rigs divergent légèrement d'une machine à l'autre. Ce qui se réplique,
-c'est la tension cible, un seul float écrit par le serveur. C'est ce qui rend la
-feature quasi gratuite en bande passante, et c'est le principe dont découle tout le
-reste — y compris la façon dont un objet tenu est attaché.
+avatars ; seule la tension cible est répliquée, un float écrit par le serveur. C'est le
+principe dont découle aussi la façon dont un objet tenu est attaché.
 
-Deux conséquences non évidentes, découvertes à l'exécution et conservées ici parce
-qu'elles se re-perdent facilement :
+Deux conséquences non évidentes, conservées ici parce qu'elles se re-perdent facilement :
 
 - Le rig physique vit **à la racine de la scène**, pas sous le joueur. Enfant du
   joueur, le mouvement de la racine s'ajouterait à la simulation et le corps partirait
-  à l'infini. Le lien est un ressort, et c'est ce ressort qui produit le retard, donc
-  le ballottement.
-- Le bassin a besoin d'un **couple de redressement** en plus du ressort de position.
-  Les joints ne contraignent que les rotations relatives : un corps parfaitement posé
-  mais couché à plat les satisfait tous, et l'avatar reste par terre.
+  à l'infini pendant un effondrement.
+- Pendant un effondrement, le bassin a besoin d'un **couple de redressement** en plus
+  du ressort de position. Les joints ne contraignent que les rotations relatives : un
+  corps parfaitement posé mais couché à plat les satisfait tous.
+
+### L'owner ne voit que ses bras
+
+Le maillage est unique, donc la vue première personne ne se fait ni par calque ni par
+masquage d'os — mettre à l'échelle un os qui porte un `Rigidbody`, un collider et un
+joint dégénère son tenseur d'inertie, ce qui avait fait dévier la tête de 156°.
+
+À la place, un second `SkinnedMeshRenderer` partage le même squelette avec un maillage
+filtré : on ne garde que les triangles pondérés à plus de 50 % sur des os de bras ou de
+main. Ce maillage est construit **au runtime** et mis en cache, pas généré comme asset :
+un maillage créé et référencé dans une même frame d'éditeur ne survit pas de façon
+fiable à la sérialisation dans un prefab, et l'échec est silencieux — un renderer actif,
+visible, et fait de rien.
 
 ### Une action, un registre de règles
 

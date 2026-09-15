@@ -313,6 +313,9 @@ règle enregistrée après elle ne s'exécutera jamais. Il n'y a rien pour t'en 
 | Un os part en vrille (156° d'écart) alors que sa raideur est haute | on l'avait mis à l'échelle 1e-4 pour le masquer, ce qui dégénère son tenseur d'inertie — il portait un `Rigidbody`, un collider et un joint | ne jamais mettre à l'échelle un os physique ; la caméra au sternum a rendu le masquage inutile |
 | Un fin liseré traverse la vue FPS | la caméra est dans le maillage du joueur, dont le back-face culling ne laisse qu'un éclat rasant | `nearClipPlane` réglé sur la distance des mains mesurée, pas au jugé |
 | Les mains sortent du cadre en FPS | près de l'objectif un petit fléchissement fait un grand angle : à 25 cm, 25 cm de chute font 45° | éloigner les buts IK (≈0.6 m) plutôt que de les baisser |
+| Les bras traînent derrière le joueur quand il marche | un ressort retarde par définition ; le ballottement était accroché à la translation | tous les os épinglés en `isKinematic` debout, le retard vient de la rotation de la vue dans `PlayerHands` |
+| Un maillage généré en éditeur sort `null` dans le prefab | créé et référencé dans la même frame, il ne survit pas à la sérialisation, et l'échec est muet | construire le maillage au runtime (`ArmsOnlyMesh`), pas comme asset |
+| Une main tenue ne transmet rien au lancer | un `Rigidbody` kinematic ne rapporte aucune vélocité | vélocité dérivée de deux positions successives dans `PlayerHands` |
 
 ---
 
@@ -320,8 +323,9 @@ règle enregistrée après elle ne s'exécutera jamais. Il n'y a rien pour t'en 
 
 Fait : boot, menu, lobby répliqué avec ready/start, chargement réseau de la scène de
 jeu, spawn des joueurs, contrôleur FPS, Direct IP + Relay + Steam, ragdoll passif à
-tension unique avec effondrement et relevé, mains en IK, objets attrapables et
-lançables, registre d'interactions contextuelles.
+tension unique pour l'effondrement et le relevé, mains en IK dont le ballottement est
+piloté par la rotation de la vue, vue première personne bras seuls, objets attrapables
+et lançables, registre d'interactions contextuelles.
 
 Manque de contenu, pas de code : `AC_Player` n'a ni idle ni locomotion. Un idle de
 repli est généré (`_ART/Player/Animation/IdleFallback.anim`) pour que le rig ne

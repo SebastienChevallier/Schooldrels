@@ -202,7 +202,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 594270643
+  GlobalObjectIdHash: 3836916788
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -352,7 +352,9 @@ MonoBehaviour:
     carryWeight: 0.9
     reachWeight: 0.85
     weightBlendSpeed: 6
-    goalBlendSpeed: 12
+    offsetBlendSpeed: 10
+    swayFollowSpeed: 7
+    maxSwayAngle: 35
     reachDistance: 2.2
 --- !u!114 &3373257258724891178
 MonoBehaviour:

@@ -7,10 +7,13 @@ namespace HoldMyBeer.Player.Hands
     /// <summary>
     /// Decides where the hands go and keeps a held item glued to the local hand.
     ///
+    /// The wobble lives here and nowhere else. The hands trail the ROTATION of the
+    /// view and follow its POSITION exactly: turning your head makes the arms swing,
+    /// walking does not make them drag. Every bone is pinned to the animated pose
+    /// while the player is upright, so no lag can creep in from physics.
+    ///
     /// Runs on every peer, not just the owner: each machine attaches the item to the
-    /// hand IT simulates. That is the whole reason nothing about the attachment is
-    /// replicated — the ragdolls diverge, and letting each one carry its own copy is
-    /// what makes the item look welded to the hand everywhere.
+    /// hand IT simulates, which is why nothing about the attachment is replicated.
     /// </summary>
     public sealed class PlayerHands : MonoBehaviour
     {
@@ -23,26 +26,30 @@ namespace HoldMyBeer.Player.Hands
         private HandSide _heldHand = HandSide.None;
         private IGrabbable _reachTarget;
 
-        private Vector3 _leftGoal;
-        private Vector3 _rightGoal;
+        private Quaternion _sway = Quaternion.identity;
+        private bool _swayReady;
+
+        private Vector3 _leftOffset;
+        private Vector3 _rightOffset;
         private float _leftWeight;
         private float _rightWeight;
+        private float _reachBlend;
+
+        private Vector3 _lastHandPosition;
+        private Vector3 _handVelocity;
 
         public HandSide HeldHand => _heldHand;
 
-        /// <summary>The hand a rule should throw from, in world space.</summary>
         public Vector3 ActiveHandPosition => HandBodyPosition(ActiveHand);
 
         public Quaternion ActiveHandRotation => HandBodyRotation(ActiveHand);
 
-        public Vector3 ActiveHandVelocity
-        {
-            get
-            {
-                var body = HandBody(ActiveHand);
-                return body != null ? body.linearVelocity : Vector3.zero;
-            }
-        }
+        /// <summary>
+        /// Derived from successive positions rather than read off the Rigidbody: the
+        /// bones are kinematic while the player is upright, and a kinematic body
+        /// reports no velocity at all. A throw would otherwise lose the hand's motion.
+        /// </summary>
+        public Vector3 ActiveHandVelocity => _handVelocity;
 
         private HandSide ActiveHand => _heldHand != HandSide.None ? _heldHand : HandSide.Right;
 
@@ -65,49 +72,87 @@ namespace HoldMyBeer.Player.Hands
                 return;
             }
 
-            UpdateHand(HandSide.Left, ref _leftGoal, ref _leftWeight);
-            UpdateHand(HandSide.Right, ref _rightGoal, ref _rightWeight);
+            var deltaTime = Time.deltaTime;
+
+            UpdateSway(deltaTime);
+            UpdateReachBlend(deltaTime);
+
+            UpdateHand(HandSide.Left, ref _leftOffset, ref _leftWeight, deltaTime);
+            UpdateHand(HandSide.Right, ref _rightOffset, ref _rightWeight, deltaTime);
 
             AttachHeldItem();
+            TrackHandVelocity(deltaTime);
         }
 
-        private void UpdateHand(HandSide side, ref Vector3 goal, ref float weight)
+        /// <summary>
+        /// The swayed view rotation: a damped copy of where the player is looking.
+        /// Only the rotation is damped — position is taken live — which is what makes
+        /// the arms react to a turn without dragging behind a walk.
+        /// </summary>
+        private void UpdateSway(float deltaTime)
+        {
+            var target = cameraPivot.rotation;
+
+            if (!_swayReady)
+            {
+                _sway = target;
+                _swayReady = true;
+                return;
+            }
+
+            _sway = Quaternion.Slerp(_sway, target,
+                1f - Mathf.Exp(-settings.SwayFollowSpeed * deltaTime));
+
+            // Clamped towards the target, not away from it: past this angle the arms
+            // are behind the shoulders and the IK solver starts folding the elbows
+            // through the chest.
+            if (Quaternion.Angle(_sway, target) > settings.MaxSwayAngle)
+            {
+                _sway = Quaternion.RotateTowards(target, _sway, settings.MaxSwayAngle);
+            }
+        }
+
+        private void UpdateReachBlend(float deltaTime)
+        {
+            var wantsReach = _reachTarget != null && _heldItem == null;
+            _reachBlend = Mathf.MoveTowards(_reachBlend, wantsReach ? 1f : 0f, deltaTime * 4f);
+        }
+
+        private void UpdateHand(HandSide side, ref Vector3 offset, ref float weight, float deltaTime)
         {
             var mirror = side == HandSide.Left ? -1f : 1f;
-            var targetWeight = settings.RestWeight;
+            var holdsItem = _heldItem != null && _heldHand == side;
 
-            Vector3 targetGoal;
+            var targetOffset = holdsItem ? settings.CarryOffset : settings.RestOffset;
+            var targetWeight = holdsItem ? settings.CarryWeight : settings.RestWeight;
 
-            if (_heldItem != null && _heldHand == side)
-            {
-                targetGoal = CameraPoint(settings.CarryOffset, mirror);
-                targetWeight = settings.CarryWeight;
-            }
-            else if (_reachTarget != null && side == HandSide.Right && _heldItem == null)
-            {
-                targetGoal = _reachTarget.GripAnchor.position;
-                targetWeight = settings.ReachWeight;
-            }
-            else
-            {
-                targetGoal = CameraPoint(settings.RestOffset, mirror);
-            }
+            // Blended in view space, never in world space: a world-space smoothing would
+            // reintroduce exactly the translation lag this design exists to remove.
+            offset = offset == Vector3.zero
+                ? targetOffset
+                : Vector3.Lerp(offset, targetOffset,
+                    1f - Mathf.Exp(-settings.OffsetBlendSpeed * deltaTime));
 
-            // Smoothed rather than snapped: the IK goal is what the physical arm chases,
-            // so a jump here would be a jerk of the whole arm rather than a wobble.
-            goal = goal == Vector3.zero
-                ? targetGoal
-                : Vector3.Lerp(goal, targetGoal, 1f - Mathf.Exp(-settings.GoalBlendSpeed * Time.deltaTime));
+            var goal = ViewPoint(offset, mirror);
+
+            var reachesForItem = side == HandSide.Right && _reachTarget != null && _heldItem == null;
+            if (reachesForItem && _reachBlend > 0f)
+            {
+                goal = Vector3.Lerp(goal, _reachTarget.GripAnchor.position, _reachBlend);
+                targetWeight = Mathf.Lerp(targetWeight, settings.ReachWeight, _reachBlend);
+            }
 
             weight = Mathf.Lerp(weight, targetWeight,
-                1f - Mathf.Exp(-settings.WeightBlendSpeed * Time.deltaTime));
+                1f - Mathf.Exp(-settings.WeightBlendSpeed * deltaTime));
 
-            ikDriver.SetGoal(side, goal, cameraPivot.rotation, weight);
+            ikDriver.SetGoal(side, goal, _sway, weight);
         }
 
-        private Vector3 CameraPoint(Vector3 offset, float mirror)
+        /// <summary>Live position, swayed rotation. That split is the whole feature.</summary>
+        private Vector3 ViewPoint(Vector3 offset, float mirror)
         {
-            return cameraPivot.TransformPoint(new Vector3(offset.x * mirror, offset.y, offset.z));
+            var mirrored = new Vector3(offset.x * mirror, offset.y, offset.z);
+            return cameraPivot.position + _sway * mirrored;
         }
 
         /// <summary>
@@ -133,6 +178,18 @@ namespace HoldMyBeer.Player.Hands
 
             body.rotation = hand.rotation;
             body.position = hand.position + (body.position - anchor.position);
+        }
+
+        private void TrackHandVelocity(float deltaTime)
+        {
+            var current = ActiveHandPosition;
+
+            if (deltaTime > 0f && _lastHandPosition != Vector3.zero)
+            {
+                _handVelocity = (current - _lastHandPosition) / deltaTime;
+            }
+
+            _lastHandPosition = current;
         }
 
         private Rigidbody HandBody(HandSide side)

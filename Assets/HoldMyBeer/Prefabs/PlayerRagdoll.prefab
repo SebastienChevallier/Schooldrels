@@ -1519,7 +1519,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  rigidWhileBraced: 0
+  rigidWhileBraced: 1
   stiffness: 1.2
 --- !u!153 &9100377094833809855
 ConfigurableJoint:
@@ -1910,7 +1910,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  rigidWhileBraced: 0
+  rigidWhileBraced: 1
   stiffness: 2.2
 --- !u!153 &5430634929875185363
 ConfigurableJoint:
@@ -2253,7 +2253,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  rigidWhileBraced: 0
+  rigidWhileBraced: 1
   stiffness: 2.2
 --- !u!153 &3284685704751567157
 ConfigurableJoint:
@@ -2913,7 +2913,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  rigidWhileBraced: 0
+  rigidWhileBraced: 1
   stiffness: 1.2
 --- !u!153 &1153480939371362110
 ConfigurableJoint:
@@ -3115,7 +3115,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  rigidWhileBraced: 0
+  rigidWhileBraced: 1
   stiffness: 4
 --- !u!153 &2201076934284321538
 ConfigurableJoint:
@@ -5032,7 +5032,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcedacfb9096894c8793b3f9d694f68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HoldMyBeer.Player::HoldMyBeer.Player.Wobble.WobbleBoneTuning
-  rigidWhileBraced: 0
+  rigidWhileBraced: 1
   stiffness: 4
 --- !u!153 &4319636641591003858
 ConfigurableJoint:

@@ -60,9 +60,13 @@ namespace HoldMyBeer.Editor
                 => new(bone, parent, mass, 0f, size, center, true, stiffness, rigidWhileBraced);
         }
 
-        // Trunk and legs are pinned: they must not lag behind the player by so much as
-        // a frame. Only the arms are simulated, and their stiffness FALLS from shoulder
-        // to hand, so the swing grows towards the fingers the way a real arm does.
+        // Every bone is pinned while the player is on their feet: nothing may lag behind
+        // the player's movement, arms included. The swing comes from the IK goal
+        // trailing the view rotation, not from a body dragging behind a position.
+        //
+        // The stiffness values below therefore only bite during a collapse and the
+        // recovery ramp, where they still shape how a limb whips around. They fall from
+        // shoulder to hand, so the swing grows towards the fingers.
         //
         // Masses total roughly 70 units; their ratios matter more than the absolutes.
         private static readonly BoneSpec[] Bones =
@@ -81,16 +85,15 @@ namespace HoldMyBeer.Editor
             BoneSpec.Box("mixamorig:RightFoot", "mixamorig:RightLeg", 1f,
                 new Vector3(0.09f, 0.19f, 0.10f), new Vector3(0f, 0.08f, 0f), 1f, true),
 
-            // Shoulder nearly solid, elbow looser, hand loosest.
-            BoneSpec.Capsule("mixamorig:LeftArm", "mixamorig:Spine1", 2.5f, 0.06f, 4f, false),
-            BoneSpec.Capsule("mixamorig:LeftForeArm", "mixamorig:LeftArm", 1.5f, 0.05f, 2.2f, false),
-            BoneSpec.Capsule("mixamorig:RightArm", "mixamorig:Spine1", 2.5f, 0.06f, 4f, false),
-            BoneSpec.Capsule("mixamorig:RightForeArm", "mixamorig:RightArm", 1.5f, 0.05f, 2.2f, false),
+            BoneSpec.Capsule("mixamorig:LeftArm", "mixamorig:Spine1", 2.5f, 0.06f, 4f, true),
+            BoneSpec.Capsule("mixamorig:LeftForeArm", "mixamorig:LeftArm", 1.5f, 0.05f, 2.2f, true),
+            BoneSpec.Capsule("mixamorig:RightArm", "mixamorig:Spine1", 2.5f, 0.06f, 4f, true),
+            BoneSpec.Capsule("mixamorig:RightForeArm", "mixamorig:RightArm", 1.5f, 0.05f, 2.2f, true),
 
             BoneSpec.Box("mixamorig:LeftHand", "mixamorig:LeftForeArm", 0.5f,
-                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f), 1.2f, false),
+                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f), 1.2f, true),
             BoneSpec.Box("mixamorig:RightHand", "mixamorig:RightForeArm", 0.5f,
-                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f), 1.2f, false)
+                new Vector3(0.05f, 0.11f, 0.09f), new Vector3(0f, 0.05f, 0f), 1.2f, true)
         };
 
         [MenuItem("Tools/Hold My Beer/Rebuild Player Ragdoll", priority = 41)]
