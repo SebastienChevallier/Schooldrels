@@ -116,11 +116,8 @@ namespace HoldMyBeer.Gameplay.Day
 
             if (AppServices.IsReady)
             {
-                if (AppServices.Container.TryResolve<IDayStateProvider>(out var provider))
-                {
-                    _provider = provider as DayStateProvider;
-                    _provider?.Set(this);
-                }
+                AppServices.Container.TryResolve<IDayStateProvider>(out var provider);
+                _provider = provider as DayStateProvider;
 
                 AppServices.Container.TryResolve(out _lobby);
                 AppServices.Container.TryResolve(out _layout);
@@ -138,6 +135,11 @@ namespace HoldMyBeer.Gameplay.Day
                 _random = new System.Random();
                 StartCycle(1);
             }
+
+            // Published last, and deliberately: whoever is watching the provider — the
+            // director, the HUD — reads the day as soon as it appears, and it must
+            // already be a drawn day rather than an empty one.
+            _provider?.Set(this);
         }
 
         public override void OnNetworkDespawn()

@@ -316,10 +316,16 @@ namespace HoldMyBeer.Editor
             lockLight.transform.localScale = new Vector3(0.06f, 0.06f, 0.3f);
             lockLight.GetComponent<Renderer>().sharedMaterial = Material("Lock", new Color(0.85f, 0.2f, 0.15f));
 
+            var obstacle = leaf.AddComponent<NavMeshObstacle>();
+            obstacle.carving = true;
+            obstacle.shape = NavMeshObstacleShape.Box;
+            obstacle.size = Vector3.one;
+
             var door = root.AddComponent<Door>();
             Set(door, s =>
             {
                 s.FindProperty("leaf").objectReferenceValue = leaf.transform;
+                s.FindProperty("obstacle").objectReferenceValue = obstacle;
                 s.FindProperty("lockRenderer").objectReferenceValue = lockLight.GetComponent<Renderer>();
                 // Slides sideways into the wall: a swinging leaf would need a hinge and
                 // would shove players around, which nothing here is worth.

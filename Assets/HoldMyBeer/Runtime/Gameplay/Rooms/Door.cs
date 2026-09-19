@@ -2,6 +2,7 @@ using HoldMyBeer.Gameplay.Day;
 using HoldMyBeer.Interaction;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace HoldMyBeer.Gameplay.Rooms
 {
@@ -21,6 +22,10 @@ namespace HoldMyBeer.Gameplay.Rooms
         [SerializeField] private Vector3 openOffset = new(0f, 0f, -1.9f);
         [SerializeField, Min(0.1f)] private float slideSeconds = 0.35f;
         [SerializeField] private Renderer lockRenderer;
+
+        [Tooltip("Découpe le NavMesh quand la porte est fermée. Sans ça les adultes traversent : " +
+                 "le NavMesh est construit au chargement, et les portes sont spawnées après.")]
+        [SerializeField] private NavMeshObstacle obstacle;
 
         private static readonly Color LockedColor = new(0.85f, 0.2f, 0.15f);
         private static readonly Color UnlockedColor = new(0.35f, 0.75f, 0.4f);
@@ -66,12 +71,33 @@ namespace HoldMyBeer.Gameplay.Rooms
             }
 
             _locked.OnValueChanged += HandleLockChanged;
+            _open.OnValueChanged += HandleOpenChanged;
             RefreshLock();
+            RefreshObstacle();
         }
 
-        public override void OnNetworkDespawn() => _locked.OnValueChanged -= HandleLockChanged;
+        public override void OnNetworkDespawn()
+        {
+            _locked.OnValueChanged -= HandleLockChanged;
+            _open.OnValueChanged -= HandleOpenChanged;
+        }
 
         private void HandleLockChanged(bool previous, bool current) => RefreshLock();
+
+        private void HandleOpenChanged(bool previous, bool current) => RefreshObstacle();
+
+        /// <summary>
+        /// The obstacle carves the NavMesh while the door is shut. It has to: the mesh
+        /// is baked at load from everything under the School root, and doors are spawned
+        /// afterwards — without this, adults walk straight through a locked room.
+        /// </summary>
+        private void RefreshObstacle()
+        {
+            if (obstacle != null)
+            {
+                obstacle.enabled = !_open.Value;
+            }
+        }
 
         /// <summary>Server only. Forced open (or shut) by the day's phase.</summary>
         public void SetOpen(bool open, bool locked)
