@@ -284,10 +284,21 @@ ajouté à la liste réseau et placé dans `NetworkPropSpawner`. `PrankRule` les
 Une bêtise avec une logique propre (le pétard) publie un `MischiefReport` sur le `MischiefBus` :
 `DayState` le crédite, les `Supervisor` l'entendent, sans se connaître.
 
-**La boucle de journée** : faire une bêtise donne de la réput' *non postée* et rend l'élève
-*recherché* quelques secondes. Un adulte qui le voit alors le poursuit ; attrapé, il part au
-bureau du CPE et perd sa réput' non postée. Seul `UploadSpot` (toilettes) la rend définitive.
-À la sonnerie, réput' d'équipe ≥ quota → jour suivant (quota ×1.5), sinon retour au jour 1.
+**La boucle de journée** (cible, voir `Documentation/specs/2026-09-19-school-day-design.md`) :
+la journée est une **machine à phases** répliquée — arrivée, pause, cours 1, dej, cours 2,
+sortie, récap. Chaque cours est tiré au sort par le **serveur** dans un catalogue et
+réplique un *index*, jamais l'objet : EPS, Techno, cours généraux (salle fixe pour le
+cycle), physique-chimie, chacun avec ses items propres spawnés à l'ouverture de la salle
+et dépawnés à sa fermeture. Hors cours, une salle est fermée à clé 80 % du temps — une
+porte est une `NetworkVariable` serveur, le client **demande** et le serveur vérifie la clé.
+Faire une bêtise donne de la réput' immédiatement et rend *recherché* quelques secondes ;
+se faire voir annule la bêtise en cours, se faire **coller** enferme en salle de colle
+pour la demi-journée et coûte la moitié de la réput' personnelle — les potes peuvent venir
+délivrer. Le quota s'évalue **tous les trois jours** : atteint → cycle suivant, plus dur,
+avec un palier de contenu débloqué ; raté → retour au jour 1. Jamais de game over.
+
+> Il n'y a plus de vidéo à poster : `UploadSpot`/`UploadRule` sont à supprimer (lot 0 du
+> plan `Documentation/plans/2026-09-19-school-day-plan.md`).
 
 **Une politique de spawn différente** → implémenter `ISpawnPointProvider` ;
 `PlayerSpawner` n'a pas à changer.
@@ -360,6 +371,15 @@ Manque de contenu, pas de code : `AC_Player` n'a ni idle ni locomotion. Un idle 
 repli est généré (`_ART/Player/Animation/IdleFallback.anim`) pour que le rig ne
 s'écrase pas ; il est à remplacer par de vraies animations, et le ragdoll copiera
 fidèlement ce qu'on lui donnera.
+
+En chantier (spec validée, code à écrire) : phases de journée, cours aléatoires et
+salles fermées à clé, self et bataille de nourriture, colle coopérative, cycles de trois
+jours avec paliers de déblocage. Spec : `Documentation/specs/2026-09-19-school-day-design.md`,
+plan : `Documentation/plans/2026-09-19-school-day-plan.md`. Points chauds réseau listés
+dans les deux : machine à phases (une seule source de vérité, `ServerTime`), volume de
+`NetworkObject` pendant une bataille de nourriture, et **état → `NetworkVariable`,
+jamais RPC**, pour qu'un joueur qui rejoint en milieu de journée voie la journée telle
+qu'elle est.
 
 Non fait (volontairement) : host migration, reconnexion, voix, anti-triche,
 persistance, interpolation avancée, UI en prefabs (l'UI est construite par code, voir
