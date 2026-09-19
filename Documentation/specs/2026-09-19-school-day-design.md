@@ -14,6 +14,10 @@ relancer un cycle.
 
 ---
 
+> **Détail par sujet :** ce spec est la vue d'ensemble. Chaque phase, chaque matière,
+> les items, les salles, la réput' et la progression ont leur propre document dans
+> `Documentation/design/` (index : `Documentation/design/README.md`).
+
 ## 1. Le déroulé d'une journée
 
 ```

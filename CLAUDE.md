@@ -284,7 +284,10 @@ ajouté à la liste réseau et placé dans `NetworkPropSpawner`. `PrankRule` les
 Une bêtise avec une logique propre (le pétard) publie un `MischiefReport` sur le `MischiefBus` :
 `DayState` le crédite, les `Supervisor` l'entendent, sans se connaître.
 
-**La boucle de journée** (cible, voir `Documentation/specs/2026-09-19-school-day-design.md`) :
+**La boucle de journée** (cible, voir `Documentation/specs/2026-09-19-school-day-design.md` ;
+le détail est découpé dans `Documentation/design/` — un doc par phase, un par matière,
+un pour les items, un pour les salles et clés, un pour la réput'/colle, un pour la
+progression, index dans `Documentation/design/README.md`) :
 la journée est une **machine à phases** répliquée — arrivée, pause, cours 1, dej, cours 2,
 sortie, récap. Chaque cours est tiré au sort par le **serveur** dans un catalogue et
 réplique un *index*, jamais l'objet : EPS, Techno, cours généraux (salle fixe pour le
