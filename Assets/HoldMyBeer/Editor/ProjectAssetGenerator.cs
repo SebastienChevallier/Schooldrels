@@ -5,6 +5,9 @@ using HoldMyBeer.Core;
 using HoldMyBeer.Gameplay;
 using HoldMyBeer.Networking;
 using HoldMyBeer.Gameplay.Interaction;
+using HoldMyBeer.Gameplay.Items;
+using HoldMyBeer.Gameplay.Lunch;
+using HoldMyBeer.Gameplay.Rooms;
 using HoldMyBeer.Player;
 using HoldMyBeer.Player.Hands;
 using HoldMyBeer.Player.Wobble;
@@ -62,9 +65,13 @@ namespace HoldMyBeer.Editor
 
             // The ragdoll is absent on purpose: it is instantiated locally by every
             // client, never spawned by NGO, so listing it would be wrong.
-            var prefabsList = CreateNetworkPrefabsList(playerPrefab, lobbyPrefab, grabbablePrefab,
-                school.DayState, school.Supervisor, school.FireAlarm, school.Blackboard, school.UploadSpot,
-                school.Firecracker);
+            //
+            // The school hands over its whole set rather than a hand-written list: a
+            // prefab that exists but is not listed is a blunt client disconnect, and
+            // the one way to never forget one is to never name them here.
+            var networkPrefabs = new List<GameObject> { playerPrefab, lobbyPrefab, grabbablePrefab };
+            networkPrefabs.AddRange(school.All);
+            var prefabsList = CreateNetworkPrefabsList(networkPrefabs.ToArray());
 
             CreateBootScene(playerPrefab, lobbyPrefab, prefabsList);
             CreateMenuScene();
@@ -483,14 +490,15 @@ namespace HoldMyBeer.Editor
             var placements = new List<(GameObject prefab, Vector3 position, Quaternion rotation)>
             {
                 (school.DayState, Vector3.zero, Quaternion.identity),
-                (school.Supervisor, new Vector3(17f, 0.1f, 0f), Quaternion.LookRotation(Vector3.left)),
                 (school.FireAlarm, new Vector3(0f, 1.4f, 1.82f), Quaternion.identity),
                 (school.Blackboard, new Vector3(-8f, 1.6f, 11.82f), Quaternion.identity),
                 (school.Blackboard, new Vector3(8f, 1.6f, 11.82f), Quaternion.identity),
-                (school.UploadSpot, new Vector3(-2f, 1.2f, -7.82f), Quaternion.identity),
                 (school.Firecracker, new Vector3(7.6f, 1f, 8.5f), Quaternion.identity),
-                (school.Firecracker, new Vector3(8.3f, 1f, 8.5f), Quaternion.identity),
-                (school.Firecracker, new Vector3(-11f, 1f, 4f), Quaternion.identity)
+                (school.Firecracker, new Vector3(-11f, 1f, 4f), Quaternion.identity),
+                (school.Tray, new Vector3(4f, 1.2f, -4f), Quaternion.identity),
+                (school.Tray, new Vector3(4.6f, 1.2f, -4f), Quaternion.identity),
+                (school.Tray, new Vector3(5.2f, 1.2f, -4f), Quaternion.identity),
+                (school.Tray, new Vector3(5.8f, 1.2f, -4f), Quaternion.identity)
             };
 
             var serializedProps = new SerializedObject(props);
@@ -509,8 +517,26 @@ namespace HoldMyBeer.Editor
 
             serializedProps.ApplyModifiedPropertiesWithoutUndo();
 
+            // Doors, keys, class items and the adults on duty all appear and disappear
+            // with the phases, so they belong to the director rather than to the scene.
+            var director = new GameObject("SchoolDirector").AddComponent<SchoolDirector>();
+            var directorSerialized = new SerializedObject(director);
+            directorSerialized.FindProperty("doorPrefab").objectReferenceValue = school.Door;
+            directorSerialized.FindProperty("keyPrefab").objectReferenceValue = school.Key;
+            directorSerialized.FindProperty("supervisorPrefab").objectReferenceValue = school.Supervisor;
+            directorSerialized.FindProperty("teacherPrefab").objectReferenceValue = school.Teacher;
+            directorSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            // The canteen queue, along the counter.
+            var servingLine = new GameObject("ServingLine").AddComponent<ServingLine>();
+            servingLine.transform.position = new Vector3(6.5f, 0f, -6.2f);
+
+            // The gate: walking out of it with a PC is what turns a theft into points.
+            var exitZone = new GameObject("ExitZone").AddComponent<ExitZone>();
+            exitZone.transform.position = new Vector3(-28f, 0f, 0f);
+
             var grabbableSpawner = new GameObject("GrabbableSpawner").AddComponent<GrabbableSpawner>();
-            grabbableSpawner.transform.position = new Vector3(8f, 0f, 6f);
+            grabbableSpawner.transform.position = new Vector3(0f, 0f, 0f);
             var spawnerSerialized = new SerializedObject(grabbableSpawner);
             spawnerSerialized.FindProperty("grabbablePrefab").objectReferenceValue =
                 AssetDatabase.LoadAssetAtPath<GameObject>(GrabbablePrefabPath);

@@ -73,7 +73,7 @@ dans les prefabs et les `CourseDefinition`, pas en dur dans le code.
 
 | Item | Poids | Bruit | Réput' | Effet |
 |---|---|---|---|---|
-| Plateau | moyen | fort | moyenne | se porte, se vide, se lance entier |
+| Plateau | moyen | fort | moyenne | se porte, **lance les portions une par une**, se lance entier |
 | Purée / plat du jour | léger | faible | faible | tache, glisse au sol |
 | Fruit | léger | faible | faible | dur, rebondit, précis |
 | Dessert / brique | léger | faible | faible | remplissage de bataille |

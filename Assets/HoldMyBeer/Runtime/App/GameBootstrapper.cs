@@ -2,7 +2,9 @@ using HoldMyBeer.Core;
 using HoldMyBeer.Gameplay;
 using HoldMyBeer.Gameplay.Day;
 using HoldMyBeer.Gameplay.Interaction;
+using HoldMyBeer.Gameplay.Items;
 using HoldMyBeer.Gameplay.Pranks;
+using HoldMyBeer.Gameplay.Rooms;
 using HoldMyBeer.Interaction;
 using HoldMyBeer.Networking;
 using Unity.Netcode;
@@ -52,6 +54,9 @@ namespace HoldMyBeer.App
 
         [Tooltip("Server-side cap on any thrown velocity. The client reports it, so it is not trusted.")]
         [SerializeField, Min(1f)] private float maxThrowSpeed = 18f;
+
+        [Tooltip("Plafond d'objets éphémères vivants (portions, projectiles). Protège le host pendant une bataille de bouffe.")]
+        [SerializeField, Min(8)] private int transientItemBudget = 48;
 
         private bool _ownsContainer;
         private ConnectionApprovalHandler _approval;
@@ -163,9 +168,17 @@ namespace HoldMyBeer.App
             container.Register(mischief);
             container.Register<IDayStateProvider>(day);
 
+            container.Register(new SmokeField());
+
             var interactions = new InteractionRegistry();
             interactions.AddRule(new GrabRule(maxGrabReach));
-            interactions.AddRule(new UploadRule(day, maxGrabReach));
+            interactions.AddRule(new OpenDoorRule(maxGrabReach));
+
+            // An item that knows how to be used is used; everything else is thrown.
+            // Two registrations because the interactor has to know before the click
+            // whether this is a tap or a wind-up.
+            interactions.AddRule(new UseHeldItemRule(charged: false));
+            interactions.AddRule(new UseHeldItemRule(charged: true));
             interactions.AddRule(new PrankRule(maxGrabReach));
             interactions.AddRule(new ThrowRule(minThrowImpulse, maxThrowImpulse, throwLob, handThrowInfluence));
 
@@ -173,7 +186,8 @@ namespace HoldMyBeer.App
             container.Register<IInteractionPrompt>(new InteractionPrompt());
             container.Register<IHeldItemTracker>(new HeldItemTracker());
             container.Register<IInteractionContext>(
-                new ServerInteractionContext(networkManager, maxThrowSpeed, mischief, day));
+                new ServerInteractionContext(networkManager, maxThrowSpeed, mischief,
+                    new TransientItemBudget(transientItemBudget)));
         }
 
         private bool ValidateReferences()

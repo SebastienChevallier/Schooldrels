@@ -28,9 +28,13 @@ namespace HoldMyBeer.Interaction
         void ReportMischief(in MischiefReport report);
 
         /// <summary>
-        /// Turns a player's unposted reputation into team reputation. False when there
-        /// was nothing to post or no school day is running.
+        /// Spawns a networked prefab into the world, already moving. Used by items that
+        /// produce other items: a blowgun pellet, a portion taken off a tray, a cloud.
+        ///
+        /// What it spawns counts against a live-object budget, so a food fight cannot
+        /// drown the host in NetworkObjects. Returns false when the budget refuses, or
+        /// off the server.
         /// </summary>
-        bool BankReputation(ulong clientId);
+        bool SpawnItem(GameObject prefab, Vector3 position, Quaternion rotation, Vector3 velocity);
     }
 }

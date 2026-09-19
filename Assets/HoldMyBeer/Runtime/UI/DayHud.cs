@@ -29,8 +29,9 @@ namespace HoldMyBeer.UI
         private ILobbyProvider _lobby;
 
         private Text _clock;
+        private Text _phaseLine;
         private Text _quota;
-        private Text _pending;
+        private Text _mine;
         private Text _wanted;
         private Text _feedText;
         private RectTransform _endPanel;
@@ -39,7 +40,7 @@ namespace HoldMyBeer.UI
         private Button _nextButton;
         private Text _nextCaption;
         private Text _waitHost;
-        private DayPhase _shownPhase = DayPhase.Playing;
+        private DayPhase _shownPhase = (DayPhase)byte.MaxValue;
 
         private void Start()
         {
@@ -92,18 +93,28 @@ namespace HoldMyBeer.UI
 
             var localId = networkManager.LocalClientId;
             var seconds = Mathf.CeilToInt(_day.SecondsRemaining);
+            var phase = _day.Phase;
 
-            _clock.text = $"Jour {_day.DayNumber}   {seconds / 60:00}:{seconds % 60:00}";
-            _clock.color = seconds <= 30 && _day.Phase == DayPhase.Playing ? Danger : UiFactory.TextColor;
+            _clock.text = $"Jour {_day.DayInCycle}/{_day.DaysPerCycle}   {seconds / 60:00}:{seconds % 60:00}";
+            _clock.color = seconds <= 20 && phase.IsInPlay() ? Danger : UiFactory.TextColor;
 
-            _quota.text = $"Quota  {_day.TeamReputation} / {_day.Quota}";
+            // The phase and what it opens: without this the player has no way to know
+            // where the class is, and finding the room is half the phase.
+            var course = _day.CurrentCourse;
+            _phaseLine.text = course != null
+                ? $"{phase.Label()} — {course.DisplayName} ({RoomName(course.Room)})"
+                : phase.Label();
+
+            _quota.text = $"Cycle {_day.Cycle}   réput' {_day.TeamReputation} / {_day.Quota}";
             _quota.color = _day.TeamReputation >= _day.Quota ? Success : UiFactory.TextColor;
 
             _day.TryGetScore(localId, out var mine);
-            _pending.text = mine.Pending > 0 ? $"Non posté : {mine.Pending}  (va aux toilettes)" : string.Empty;
+            _mine.text = mine.IsDetained
+                ? "COLLÉ — attends la prochaine heure, ou qu'un pote ouvre la porte"
+                : $"Ta réput' : {mine.Reputation}";
+            _mine.color = mine.IsDetained ? Danger : UiFactory.Accent;
 
-            var wanted = _day.Phase == DayPhase.Playing && _day.IsWanted(localId);
-            _wanted.gameObject.SetActive(wanted);
+            _wanted.gameObject.SetActive(phase.IsInPlay() && !mine.IsDetained && _day.IsWanted(localId));
 
             RefreshFeed();
             RefreshEndPanel(networkManager.IsHost);
@@ -143,7 +154,7 @@ namespace HoldMyBeer.UI
             }
 
             _shownPhase = phase;
-            var ended = phase != DayPhase.Playing;
+            var ended = phase == DayPhase.Recap;
             _endPanel.gameObject.SetActive(ended);
 
             // The player controller only locks the cursor at spawn, so the verdict has
@@ -156,32 +167,65 @@ namespace HoldMyBeer.UI
                 return;
             }
 
-            var won = phase == DayPhase.QuotaMet;
-            _endTitle.text = won ? "QUOTA ATTEINT" : "LOOSER";
-            _endTitle.color = won ? Success : Danger;
-            _endDetails.text = BuildDetails(won);
+            // The verdict only exists on the last day of the cycle: the two days
+            // before it are a recap, not a judgement, which is what gives the quota
+            // its room to recover.
+            var lastDay = _day.DayInCycle >= _day.DaysPerCycle;
+            var won = lastDay && _day.TeamReputation >= _day.Quota;
+
+            _endTitle.text = !lastDay ? $"FIN DU JOUR {_day.DayInCycle}" : won ? "QUOTA ATTEINT" : "LOOSER";
+            _endTitle.color = !lastDay ? UiFactory.TextColor : won ? Success : Danger;
+            _endDetails.text = BuildDetails(lastDay, won);
 
             _nextButton.gameObject.SetActive(isHost);
-            _nextCaption.text = won ? "Jour suivant" : "Recommencer la semaine";
+            _nextCaption.text = !lastDay ? "Jour suivant" : won ? "Cycle suivant" : "Recommencer le cycle";
             _waitHost.gameObject.SetActive(!isHost);
         }
 
-        private string BuildDetails(bool won)
+        private string BuildDetails(bool lastDay, bool won)
         {
             _builder.Clear();
-            _builder.AppendLine(won
-                ? $"{_day.TeamReputation} réput' pour un quota de {_day.Quota}."
-                : $"{_day.TeamReputation} réput' sur {_day.Quota}. Toute la classe redescend en jour 1.");
+
+            if (!lastDay)
+            {
+                _builder.AppendLine($"{_day.TeamReputation} réput' sur {_day.Quota} — il reste " +
+                                    $"{_day.DaysPerCycle - _day.DayInCycle} jour(s) pour y arriver.");
+            }
+            else if (won)
+            {
+                var tier = _day.Tier;
+                _builder.AppendLine($"{_day.TeamReputation} réput' pour un quota de {_day.Quota}.");
+                _builder.AppendLine(tier != null ? $"Débloqué : {tier.Headline}" : string.Empty);
+            }
+            else
+            {
+                _builder.AppendLine($"{_day.TeamReputation} réput' sur {_day.Quota}. " +
+                                    "Le cycle recommence au jour 1 — rien n'est perdu.");
+            }
+
             _builder.AppendLine();
 
             foreach (var score in _day.Scores)
             {
                 _builder.AppendLine(
-                    $"{NameOf(score.ClientId)} — posté {score.Posted}, perdu {score.Pending}, collé {score.Detentions}×");
+                    $"{NameOf(score.ClientId)} — {score.Reputation} réput', collé {score.Detentions}×");
             }
 
             return _builder.ToString();
         }
+
+        private static string RoomName(RoomId room) => room switch
+        {
+            RoomId.General => "salle de cours",
+            RoomId.Techno => "salle de techno",
+            RoomId.Lab => "labo",
+            RoomId.Gym => "gymnase",
+            RoomId.Cafeteria => "réfectoire",
+            RoomId.Toilets => "WC",
+            RoomId.Detention => "bureau du CPE",
+            RoomId.Staff => "loge",
+            _ => "couloir"
+        };
 
         private string NameOf(ulong clientId)
         {
@@ -206,11 +250,13 @@ namespace HoldMyBeer.UI
 
             _clock = CreateCorner(canvas.transform, new Vector2(0f, 1f), new Vector2(32f, -24f), 34,
                 TextAnchor.UpperLeft);
-            _quota = CreateCorner(canvas.transform, new Vector2(0f, 1f), new Vector2(32f, -70f), 28,
+            _phaseLine = CreateCorner(canvas.transform, new Vector2(0f, 1f), new Vector2(32f, -66f), 26,
                 TextAnchor.UpperLeft);
-            _pending = CreateCorner(canvas.transform, new Vector2(0f, 1f), new Vector2(32f, -110f), 24,
+            _quota = CreateCorner(canvas.transform, new Vector2(0f, 1f), new Vector2(32f, -102f), 24,
                 TextAnchor.UpperLeft);
-            _pending.color = UiFactory.Accent;
+            _mine = CreateCorner(canvas.transform, new Vector2(0f, 1f), new Vector2(32f, -136f), 24,
+                TextAnchor.UpperLeft);
+            _mine.color = UiFactory.Accent;
 
             _feedText = CreateCorner(canvas.transform, new Vector2(1f, 1f), new Vector2(-32f, -24f), 22,
                 TextAnchor.UpperRight);

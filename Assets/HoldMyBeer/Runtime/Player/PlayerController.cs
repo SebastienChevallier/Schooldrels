@@ -1,3 +1,5 @@
+using HoldMyBeer.Core;
+using HoldMyBeer.Interaction;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -17,10 +19,17 @@ namespace HoldMyBeer.Player
         [SerializeField] private AudioListener playerAudioListener;
         [SerializeField] private PlayerMovementSettings settings = PlayerMovementSettings.Default;
 
+        [Tooltip("Masse à partir de laquelle un objet tenu commence à ralentir le joueur.")]
+        [SerializeField, Min(0.1f)] private float heavyItemMass = 4f;
+
+        [Tooltip("Vitesse minimale en portant le plus lourd des objets.")]
+        [SerializeField, Range(0.1f, 1f)] private float heavyItemSlowdown = 0.55f;
+
         private CharacterController _controller;
         private FirstPersonMotor _motor;
         private IPlayerInputSource _input;
         private PlayerRagdollState _ragdollState;
+        private IHeldItemTracker _tracker;
         private float _pitch;
         private bool _motorSuspended;
 
@@ -44,6 +53,14 @@ namespace HoldMyBeer.Player
 
             SetLocalRigActive(true);
             SetCursorLocked(true);
+
+            // Resolved once, here rather than in Update: the container is not a
+            // per-frame lookup table (CLAUDE.md §6).
+            if (AppServices.IsReady)
+            {
+                AppServices.Container.TryResolve(out _tracker);
+            }
+
             enabled = true;
         }
 
@@ -105,6 +122,7 @@ namespace HoldMyBeer.Player
                 return;
             }
 
+            _motor.SpeedScale = CarryingSpeedScale();
             _motor.Tick(_input.Move, _input.SprintHeld, _input.JumpPressedThisFrame, Time.deltaTime);
 
             if (_ragdollState != null &&
@@ -112,6 +130,22 @@ namespace HoldMyBeer.Player
             {
                 _ragdollState.RequestCollapseRpc();
             }
+        }
+
+        /// <summary>
+        /// Heavy things are meant to be a problem. The mass already lives on the item,
+        /// so this needs no new contract — and the player layer still knows nothing
+        /// about what a PC or a tray actually is.
+        /// </summary>
+        private float CarryingSpeedScale()
+        {
+            if (_tracker == null || !_tracker.TryGetHeldItem(OwnerClientId, out var item) || !item.IsHeld)
+            {
+                return 1f;
+            }
+
+            var excess = Mathf.InverseLerp(heavyItemMass, heavyItemMass * 3f, item.Mass);
+            return Mathf.Lerp(1f, heavyItemSlowdown, excess);
         }
 
         private void ApplyLook(Vector2 look)

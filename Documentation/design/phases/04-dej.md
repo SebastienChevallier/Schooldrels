@@ -16,8 +16,10 @@ vers le réfectoire.
 - Une **file** matérialisée : on avance, on ne choisit rien.
 - En passant devant la chaîne, le **plateau se remplit tout seul** avec le menu du
   jour, tiré au sort comme le reste (cf. [`../items.md`](../items.md) § Nourriture).
-- Le plateau est un objet tenu ; chaque élément posé dessus est un objet lançable, avec
-  la même charge au maintien du clic que partout ailleurs.
+- Le plateau est un objet tenu, et **c'est lui qui lance** : viser et cliquer envoie une
+  portion. Un joueur ne tient qu'un objet à la fois dans ce jeu (`HeldItemTracker`
+  indexe un objet par client), donc jongler entre plateau et purée serait pénible là où
+  la blague doit être immédiate.
 
 ### La bataille
 
@@ -47,6 +49,15 @@ host qui est aussi un joueur.
 - Despawn différé des restes : le sol se nettoie tout seul en fin de phase.
 - À mesurer avant d'aller plus loin : 4 joueurs, bataille pleine, bande passante et
   temps de frame du host.
+
+## État du code
+
+Implémenté : `ServingLine` (file, remplissage serveur), `Tray` (portions répliquées,
+lancer), `MenuOfTheDay` sous forme de tirage d'index dans un catalogue de menus,
+`LightProjectile` (impulsion répliquée, simulation locale, pose de repos corrigée),
+`TransientItemBudget` (plafond + despawn du plus ancien), `MessyImpact` (toucher
+quelqu'un, bonus sur un adulte). **Jamais mesuré en conditions réelles** : le test à
+4 joueurs reste à faire.
 
 ## À implémenter
 

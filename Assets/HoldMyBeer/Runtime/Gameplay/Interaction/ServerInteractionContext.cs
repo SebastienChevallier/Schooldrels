@@ -15,15 +15,15 @@ namespace HoldMyBeer.Gameplay.Interaction
         private readonly NetworkManager _networkManager;
         private readonly float _maxThrowSpeed;
         private readonly MischiefBus _mischief;
-        private readonly IDayStateProvider _day;
+        private readonly TransientItemBudget _budget;
 
         public ServerInteractionContext(NetworkManager networkManager, float maxThrowSpeed, MischiefBus mischief,
-                                        IDayStateProvider day)
+                                        TransientItemBudget budget)
         {
             _networkManager = networkManager;
             _maxThrowSpeed = maxThrowSpeed;
             _mischief = mischief;
-            _day = day;
+            _budget = budget;
         }
 
         public void ReportMischief(in MischiefReport report)
@@ -34,9 +34,42 @@ namespace HoldMyBeer.Gameplay.Interaction
             }
         }
 
-        public bool BankReputation(ulong clientId)
+        public bool SpawnItem(GameObject prefab, Vector3 position, Quaternion rotation, Vector3 velocity)
         {
-            return _networkManager.IsServer && _day.Current is DayState day && day.Bank(clientId);
+            if (!TrySpawn(prefab, position, rotation, out var instance))
+            {
+                return false;
+            }
+
+            if (instance.TryGetComponent<Rigidbody>(out var body) && !body.isKinematic)
+            {
+                body.linearVelocity = Clamp(velocity);
+            }
+
+            return true;
+        }
+
+        private bool TrySpawn(GameObject prefab, Vector3 position, Quaternion rotation, out GameObject instance)
+        {
+            instance = null;
+
+            if (!_networkManager.IsServer || prefab == null)
+            {
+                return false;
+            }
+
+            instance = Object.Instantiate(prefab, position, rotation);
+            var networkObject = instance.GetComponent<NetworkObject>();
+            if (networkObject == null)
+            {
+                Object.Destroy(instance);
+                instance = null;
+                return false;
+            }
+
+            networkObject.Spawn();
+            _budget?.Track(networkObject);
+            return true;
         }
 
         public bool Hold(IGrabbable item, ulong clientId, HandSide hand)

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using HoldMyBeer.Gameplay.Day;
 using HoldMyBeer.Gameplay.Adults;
 using Unity.AI.Navigation;
@@ -10,22 +11,75 @@ namespace HoldMyBeer.Editor
     /// <summary>
     /// Greybox of the prototype school, seen from above (x east, z north):
     ///
-    ///            ┌── Salle A ──┐   ┌── Salle B ──┐        z = 12
-    ///            │             │   │  pétards    │
-    ///   ┌────────┴────  ───────┴───┴────  ───────┴────────┐ z = 2
-    ///   │ spawn           couloir  (alarme)            ◄ S │
-    ///   └──────────────┬──  ──┬──────────────┬──  ──┬─────┘ z = -2
-    ///                  │ WC   │              │ CPE  │        z = -8
-    ///                  └──────┘              └──────┘
+    ///   ┌ Loge ┐  ┌── Salle générale ──┐  ┌── Techno ──┐      ┌── Gymnase ──┐   z = 12/16
+    ///   │      │  │                    │  │            │      │             │
+    /// ──┴──  ──┴──┴─────  ────────  ───┴──┴──  ────────┴──  ──┴─────────────┘   z = 2
+    ///    couloir                      (alarme)                                  z = -2
+    /// ──┬──  ─────────┬──  ──┬────────┬──  ──────┬────────────┬──
+    ///   │   Labo      │  WC  │        │  Self    │   CPE      │                 z = -12
+    ///   └─────────────┘──────┘        └──────────┘────────────┘
     ///
-    /// Every door is 2 m wide. The supervisor paths on a NavMesh built at load from
-    /// everything under the School root, so walls and doors can move freely.
+    /// Every door is 2 m wide and every room is described once, in <see cref="Rooms"/>:
+    /// walls, door marker, item markers and the <c>Room</c> component all come from
+    /// the same table, so moving a room is changing four numbers.
+    ///
+    /// The supervisor paths on a NavMesh built at load from everything under the
+    /// School root, so walls and doors can move freely.
     /// </summary>
     public static class SchoolBuilder
     {
         private const float WallHeight = 3f;
         private const float WallThickness = 0.2f;
         private const float DoorWidth = 2f;
+
+        /// <summary>One room of the greybox: its footprint, and where its door sits.</summary>
+        private readonly struct RoomSpec
+        {
+            public RoomSpec(RoomId id, string name, float xMin, float xMax, float zMin, float zMax,
+                            float doorX, bool doorOnNorthWall, int itemMarkers)
+            {
+                Id = id;
+                Name = name;
+                XMin = xMin;
+                XMax = xMax;
+                ZMin = zMin;
+                ZMax = zMax;
+                DoorX = doorX;
+                DoorOnNorthWall = doorOnNorthWall;
+                ItemMarkers = itemMarkers;
+            }
+
+            public RoomId Id { get; }
+            public string Name { get; }
+            public float XMin { get; }
+            public float XMax { get; }
+            public float ZMin { get; }
+            public float ZMax { get; }
+
+            /// <summary>Where the door pierces the corridor wall.</summary>
+            public float DoorX { get; }
+
+            /// <summary>North of the corridor (z = 2) or south of it (z = -2).</summary>
+            public bool DoorOnNorthWall { get; }
+
+            public int ItemMarkers { get; }
+
+            public Vector3 Centre => new((XMin + XMax) / 2f, 0f, (ZMin + ZMax) / 2f);
+            public Vector3 Size => new(XMax - XMin, 4f, ZMax - ZMin);
+            public Vector3 DoorPosition => new(DoorX, 0f, DoorOnNorthWall ? 2f : -2f);
+        }
+
+        private static readonly RoomSpec[] Rooms =
+        {
+            new(RoomId.Staff, "Loge", -21f, -16f, 2f, 8f, -18.5f, true, 3),
+            new(RoomId.General, "SalleGenerale", -14f, -2f, 2f, 12f, -8f, true, 6),
+            new(RoomId.Techno, "Techno", 2f, 14f, 2f, 12f, 8f, true, 6),
+            new(RoomId.Gym, "Gymnase", 16f, 30f, 2f, 16f, 18f, true, 6),
+            new(RoomId.Lab, "Labo", -21f, -10f, -12f, -2f, -16f, false, 6),
+            new(RoomId.Toilets, "WC", -6f, 2f, -8f, -2f, -2f, false, 0),
+            new(RoomId.Cafeteria, "Self", 3f, 10f, -14f, -2f, 6f, false, 8),
+            new(RoomId.Detention, "BureauCPE", 12f, 18f, -8f, -2f, 14f, false, 0)
+        };
 
         public static void BuildWalls(GameObject ground)
         {
@@ -38,19 +92,16 @@ namespace HoldMyBeer.Editor
             root.gameObject.AddComponent<RuntimeNavMeshBuilder>();
             var material = SchoolPrefabs.Material("Wall", new Color(0.85f, 0.82f, 0.72f));
 
-            // Corridor, with a door to each room.
-            WallAlongX(root, material, 2f, -20f, 20f, -8f, 8f);
-            WallAlongX(root, material, -2f, -20f, 20f, -2f, 14f);
-            WallAlongZ(root, material, -20f, -2f, 2f);
-            WallAlongZ(root, material, 20f, -2f, 2f);
+            // The corridor, pierced once per room that opens onto it.
+            WallAlongX(root, material, 2f, -30f, 30f, DoorCentres(northWall: true));
+            WallAlongX(root, material, -2f, -30f, 30f, DoorCentres(northWall: false));
+            WallAlongZ(root, material, -30f, -2f, 2f);
+            WallAlongZ(root, material, 30f, -2f, 2f);
 
-            // Classrooms A and B.
-            Room(root, material, -14f, -2f, 2f, 12f);
-            Room(root, material, 2f, 14f, 2f, 12f);
-
-            // Toilets (the only signal) and the CPE's office (detention).
-            Room(root, material, -6f, 2f, -8f, -2f);
-            Room(root, material, 10f, 18f, -8f, -2f);
+            foreach (var room in Rooms)
+            {
+                Room(root, material, room);
+            }
 
             // Desks, so the classrooms read as classrooms and there is something to hide behind.
             var desk = SchoolPrefabs.Material("Desk", new Color(0.55f, 0.38f, 0.22f));
@@ -59,6 +110,9 @@ namespace HoldMyBeer.Editor
                 Block(root, desk, "Desk", new Vector3(x, 0.4f, 8.5f), new Vector3(1.6f, 0.8f, 0.8f));
                 Block(root, desk, "Desk", new Vector3(x, 0.4f, 5.5f), new Vector3(1.6f, 0.8f, 0.8f));
             }
+
+            // The canteen counter: the queue runs along it, which is the whole ritual.
+            Block(root, desk, "Counter", new Vector3(6.5f, 0.5f, -5f), new Vector3(6f, 1f, 0.8f));
         }
 
         public static void BuildLayout()
@@ -67,45 +121,133 @@ namespace HoldMyBeer.Editor
 
             var detention = new GameObject("DetentionPoint").transform;
             detention.SetParent(layoutObject.transform, false);
-            detention.SetPositionAndRotation(new Vector3(14f, 0.1f, -6f), Quaternion.LookRotation(Vector3.forward));
+            detention.SetPositionAndRotation(new Vector3(15f, 0.1f, -6f), Quaternion.LookRotation(Vector3.forward));
 
             var waypoints = new[]
             {
-                new Vector3(17f, 0f, 0f), new Vector3(8f, 0f, 0f), new Vector3(8f, 0f, 7f),
-                new Vector3(8f, 0f, 0f), new Vector3(-8f, 0f, 0f), new Vector3(-8f, 0f, 7f),
-                new Vector3(-8f, 0f, 0f), new Vector3(-17f, 0f, 0f)
+                new Vector3(24f, 0f, 0f), new Vector3(18f, 0f, 0f), new Vector3(8f, 0f, 0f),
+                new Vector3(8f, 0f, 6f), new Vector3(8f, 0f, 0f), new Vector3(-2f, 0f, 0f),
+                new Vector3(-8f, 0f, 0f), new Vector3(-8f, 0f, 6f), new Vector3(-8f, 0f, 0f),
+                new Vector3(-16f, 0f, 0f), new Vector3(-24f, 0f, 0f)
             };
 
             var routeRoot = new GameObject("PatrolRoute").transform;
             routeRoot.SetParent(layoutObject.transform, false);
             var route = new Transform[waypoints.Length];
-            for (var i = 0; i < waypoints.Length; i++)
+            for (var i = 0; i < route.Length; i++)
             {
                 route[i] = new GameObject($"Waypoint_{i}").transform;
                 route[i].SetParent(routeRoot, false);
                 route[i].position = waypoints[i];
             }
 
+            var rooms = new List<UnityEngine.Object>();
+            foreach (var spec in Rooms)
+            {
+                rooms.Add(BuildRoom(layoutObject.transform, spec));
+            }
+
             var layout = layoutObject.AddComponent<SchoolLayout>();
             var serialized = new SerializedObject(layout);
             serialized.FindProperty("detentionPoint").objectReferenceValue = detention;
-            var routeProperty = serialized.FindProperty("patrolRoute");
-            routeProperty.arraySize = route.Length;
-            for (var i = 0; i < route.Length; i++)
-            {
-                routeProperty.GetArrayElementAtIndex(i).objectReferenceValue = route[i];
-            }
-
+            Fill(serialized.FindProperty("patrolRoute"), route);
+            Fill(serialized.FindProperty("rooms"), rooms.ToArray());
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        private static void Room(Transform root, Material material, float xMin, float xMax, float zMin, float zMax)
+        /// <summary>
+        /// One <c>Room</c> plus its markers. The door marker sits in the corridor wall
+        /// and faces the room, because that is where <c>SchoolDirector</c> spawns the
+        /// networked door at runtime — doors are spawned prefabs like every other
+        /// networked object, never scene objects.
+        /// </summary>
+        private static HoldMyBeer.Gameplay.Day.Room BuildRoom(Transform parent, RoomSpec spec)
+        {
+            var roomObject = new GameObject($"Room_{spec.Name}");
+            roomObject.transform.SetParent(parent, false);
+            roomObject.transform.position = spec.Centre;
+
+            var doorMarker = new GameObject("Door").transform;
+            doorMarker.SetParent(roomObject.transform, false);
+            doorMarker.position = spec.DoorPosition;
+            doorMarker.rotation = Quaternion.LookRotation(spec.DoorOnNorthWall ? Vector3.forward : Vector3.back);
+
+            var markersRoot = new GameObject("ItemMarkers").transform;
+            markersRoot.SetParent(roomObject.transform, false);
+
+            var markers = new UnityEngine.Object[spec.ItemMarkers];
+            for (var i = 0; i < spec.ItemMarkers; i++)
+            {
+                var marker = new GameObject($"Item_{i}").transform;
+                marker.SetParent(markersRoot, false);
+
+                // Spread along the room, a metre off the floor: items drop onto desks
+                // and counters rather than clipping through them.
+                var t = (i + 0.5f) / spec.ItemMarkers;
+                marker.position = new Vector3(
+                    Mathf.Lerp(spec.XMin + 1.5f, spec.XMax - 1.5f, t),
+                    1f,
+                    Mathf.Lerp(spec.ZMin + 1.5f, spec.ZMax - 1.5f, i % 2 == 0 ? 0.35f : 0.75f));
+                markers[i] = marker;
+            }
+
+            var teacherRoot = new GameObject("TeacherRoute").transform;
+            teacherRoot.SetParent(roomObject.transform, false);
+            var teacherRoute = new UnityEngine.Object[3];
+            for (var i = 0; i < teacherRoute.Length; i++)
+            {
+                var point = new GameObject($"Teacher_{i}").transform;
+                point.SetParent(teacherRoot, false);
+                point.position = new Vector3(
+                    Mathf.Lerp(spec.XMin + 2f, spec.XMax - 2f, i / 2f),
+                    0f,
+                    Mathf.Lerp(spec.ZMin + 2f, spec.ZMax - 2f, 0.15f));
+                teacherRoute[i] = point;
+            }
+
+            var room = roomObject.AddComponent<HoldMyBeer.Gameplay.Day.Room>();
+            var serialized = new SerializedObject(room);
+            serialized.FindProperty("id").enumValueIndex = (int)spec.Id;
+            serialized.FindProperty("size").vector3Value = spec.Size;
+            serialized.FindProperty("doorMarker").objectReferenceValue = doorMarker;
+            Fill(serialized.FindProperty("itemMarkers"), markers);
+            Fill(serialized.FindProperty("teacherRoute"), teacherRoute);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            return room;
+        }
+
+        private static void Fill(SerializedProperty array, UnityEngine.Object[] values)
+        {
+            array.arraySize = values.Length;
+            for (var i = 0; i < values.Length; i++)
+            {
+                array.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
+            }
+        }
+
+        private static float[] DoorCentres(bool northWall)
+        {
+            var centres = new List<float>();
+            foreach (var room in Rooms)
+            {
+                if (room.DoorOnNorthWall == northWall)
+                {
+                    centres.Add(room.DoorX);
+                }
+            }
+
+            centres.Sort();
+            return centres.ToArray();
+        }
+
+        private static void Room(Transform root, Material material, RoomSpec spec)
         {
             // The side touching the corridor is already built, with its door.
-            var farZ = Mathf.Abs(zMin) > Mathf.Abs(zMax) ? zMin : zMax;
-            WallAlongX(root, material, farZ, xMin, xMax);
-            WallAlongZ(root, material, xMin, zMin, zMax);
-            WallAlongZ(root, material, xMax, zMin, zMax);
+            var farZ = spec.DoorOnNorthWall ? spec.ZMax : spec.ZMin;
+            WallAlongX(root, material, farZ, spec.XMin, spec.XMax);
+            WallAlongZ(root, material, spec.XMin, spec.ZMin, spec.ZMax);
+            WallAlongZ(root, material, spec.XMax, spec.ZMin, spec.ZMax);
         }
 
         /// <summary>A wall running east-west at <paramref name="z"/>, split around each door centre.</summary>

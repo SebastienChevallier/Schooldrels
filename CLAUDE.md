@@ -276,7 +276,28 @@ L'invite affichée vient de `CanApply`, publiée dans `IInteractionPrompt` et lu
 `CrosshairHud`. L'UI ne connaît ni les joueurs, ni les règles, ni NGO.
 
 **Un objet de jeu répliqué** → prefab + `NetworkObject`, ajouté à la
-`NetworkPrefabsList`, spawné **par le serveur** avec `.Spawn()`.
+`NetworkPrefabsList`, spawné **par le serveur** avec `.Spawn()`. En pratique,
+`SchoolPrefabs.Grabbable(...)` fabrique déjà la forme commune (corps, grip, réplication,
+et le traitement « projectile » pour les objets jetables), et `SchoolPrefabs.All` est ce
+que le générateur met dans la liste réseau : on n'énumère jamais les prefabs à la main,
+justement pour ne pas en oublier un.
+
+**Un objet qui *fait* quelque chose** (siffler, souffler dans une sarbacane, mélanger
+deux réactifs, balancer une portion) → un composant qui implémente `IUsableItem` sur le
+prefab. Rien d'autre : `UseHeldItemRule` est déjà enregistrée entre `GrabRule` et
+`ThrowRule` et interroge l'objet tenu.
+
+```csharp
+public sealed class Whistle : NetworkBehaviour, IUsableItem
+{
+    public bool IsCharged => false;                       // true = on charge au maintien
+    public bool CanUse(in InteractionRequest r, out string prompt) { prompt = "Siffler"; return IsSpawned; }
+    public void Use(in InteractionRequest r, IInteractionContext ctx) { /* serveur seul */ }
+}
+```
+
+`IsCharged` est lu avant le clic : la règle est enregistrée deux fois (instantané et
+chargé) parce qu'une règle ne peut pas changer d'avis au milieu d'une pression.
 
 **Une nouvelle bêtise sur un objet fixe** (alarme, tableau…) → aucun code : un prefab
 `PrankTarget` réglé (réput', rayon de bruit, 0 = silencieux, cooldown) dans `SchoolPrefabs`,
@@ -350,6 +371,9 @@ avec un palier de contenu débloqué ; raté → retour au jour 1. Jamais de gam
 | Un maillage généré en éditeur sort `null` dans le prefab | créé et référencé dans la même frame, il ne survit pas à la sérialisation, et l'échec est muet | construire le maillage au runtime (`ArmsOnlyMesh`), pas comme asset |
 | Une main tenue ne transmet rien au lancer | un `Rigidbody` kinematic ne rapporte aucune vélocité | vélocité dérivée de deux positions successives dans `PlayerHands` |
 | L'invite reste vide alors qu'on vise bien un objet | l'objet test tombe entre deux appels de mesure | le figer en kinematic le temps du test, ce n'est pas un bug du jeu |
+| Une valeur écrite juste avant `Spawn()` n'arrive pas | une `NetworkVariable` sur un objet pas encore spawné n'a personne à qui parler | garder la valeur dans un champ simple et la pousser dans `OnNetworkSpawn` côté serveur (`Door.Configure`, `KeyItem.SetRoom`) |
+| Un joueur « perd » ce qu'il tenait en prenant autre chose | `HeldItemTracker` indexe **un** objet par client : c'est le modèle, pas un bug | un objet à la fois ; le plateau ne donne pas une portion en main, il la lance |
+| Un pic de spawn fait décrocher le host à chaque sonnerie | tous les items d'une salle arrivent sur la même frame | spawn étalé sur plusieurs frames (`SchoolDirector`) + plafond (`TransientItemBudget`) |
 
 ---
 
@@ -375,14 +399,21 @@ repli est généré (`_ART/Player/Animation/IdleFallback.anim`) pour que le rig 
 s'écrase pas ; il est à remplacer par de vraies animations, et le ragdoll copiera
 fidèlement ce qu'on lui donnera.
 
-En chantier (spec validée, code à écrire) : phases de journée, cours aléatoires et
-salles fermées à clé, self et bataille de nourriture, colle coopérative, cycles de trois
-jours avec paliers de déblocage. Spec : `Documentation/specs/2026-09-19-school-day-design.md`,
-plan : `Documentation/plans/2026-09-19-school-day-plan.md`. Points chauds réseau listés
-dans les deux : machine à phases (une seule source de vérité, `ServerTime`), volume de
-`NetworkObject` pendant une bataille de nourriture, et **état → `NetworkVariable`,
-jamais RPC**, pour qu'un joueur qui rejoint en milieu de journée voie la journée telle
-qu'elle est.
+Journée en phases **implémentée**, jamais encore jouée à deux : arrivée, pause, cours 1,
+déjeuner, cours 2, sortie, récap (`DayState`, `DaySchedule`), cours tirés par le serveur
+dans un `CourseCatalog` et répliqués **en index**, salles avec portes et clés
+(`Door`, `KeyItem`, `OpenDoorRule`, tirage 80/20 en masque de bits), items de cours
+spawnés/dépawnés par phase et étalés sur plusieurs frames (`SchoolDirector`), self avec
+file et plateaux (`ServingLine`, `Tray`) et projectiles à impulsion répliquée
+(`LightProjectile`), colle à durée de demi-journée avec délivrance par les potes,
+cycles de trois jours et paliers (`ProgressionTier`), vol de PC (`LootItem`, `ExitZone`),
+fumée qui aveugle les adultes (`SmokeCloud`, `SmokeField`), prof dans la salle du cours.
+
+**À vérifier en jouant, à deux clients** — rien de tout ça n'a tourné dans Unity depuis
+cette session : c'est du code écrit et relu, pas du code validé. Ordre conseillé :
+machine à phases → portes/clés → items de cours → self. Spec :
+`Documentation/specs/2026-09-19-school-day-design.md`, détail par sujet dans
+`Documentation/design/`, plan dans `Documentation/plans/`.
 
 Non fait (volontairement) : host migration, reconnexion, voix, anti-triche,
 persistance, interpolation avancée, UI en prefabs (l'UI est construite par code, voir

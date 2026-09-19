@@ -63,6 +63,13 @@ client : « j'essaie d'ouvrir »   ──RPC(SendTo.Server)──►   serveur :
 - Les clés sont des objets réseau ordinaires, mais **importantes** : réplication
   sérieuse (pas le modèle « projectile » de la nourriture).
 
+## État du code
+
+Implémenté : `Door` (`_open`/`_locked` répliqués, RPC d'intention via `OpenDoorRule`),
+`KeyItem` (voler une clé publie un `MischiefReport`), tirage 80/20 en masque de bits sur
+`DayState`, et `SchoolDirector` qui **spawne** les portes et les clés aux marqueurs des
+salles — comme tout le reste, une porte est un prefab réseau, jamais un objet de scène.
+
 ## À implémenter
 
 - [ ] `Door` + `OpenDoorRule` + `RoomId`.

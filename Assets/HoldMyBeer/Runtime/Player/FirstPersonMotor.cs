@@ -24,6 +24,13 @@ namespace HoldMyBeer.Player
         public bool IsGrounded => _controller.isGrounded;
 
         /// <summary>
+        /// Multiplies walking and sprinting speed. Carrying something heavy is the only
+        /// thing that uses it today: a stolen PC has to be visibly awkward, or stealing
+        /// one is free.
+        /// </summary>
+        public float SpeedScale { get; set; } = 1f;
+
+        /// <summary>
         /// Downward speed at the frame the character touched the ground again, or 0.
         /// Only valid on the landing frame: it is recomputed by every Tick.
         /// </summary>
@@ -33,7 +40,7 @@ namespace HoldMyBeer.Player
         {
             var transform = _controller.transform;
             var direction = transform.right * moveInput.x + transform.forward * moveInput.y;
-            var speed = sprint ? _settings.SprintSpeed : _settings.WalkSpeed;
+            var speed = (sprint ? _settings.SprintSpeed : _settings.WalkSpeed) * Mathf.Max(0.1f, SpeedScale);
 
             _velocity.x = direction.x * speed;
             _velocity.z = direction.z * speed;

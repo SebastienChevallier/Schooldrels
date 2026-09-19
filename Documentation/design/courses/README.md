@@ -31,6 +31,10 @@ public sealed class CourseDefinition : ScriptableObject
 - Les **cours généraux** (français, maths, philo) partagent **une salle fixe pour tout
   le cycle**, tirée au premier jour. Les joueurs doivent pouvoir apprendre une carte.
 
+**L'ordre du catalogue est l'ordre de déblocage** : un palier ouvre les N premières
+matières de la liste. C'est pour ça que les cours généraux et l'EPS sont en tête et la
+physique-chimie en queue.
+
 ## Les matières
 
 | Matière | Salle | Doc |

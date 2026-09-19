@@ -1,5 +1,6 @@
 using HoldMyBeer.Core;
 using HoldMyBeer.Gameplay.Day;
+using HoldMyBeer.Gameplay.Items;
 using HoldMyBeer.Interaction;
 using Unity.Netcode;
 using UnityEngine;
@@ -37,6 +38,10 @@ namespace HoldMyBeer.Gameplay.Adults
         [SerializeField, Min(0f)] private float loseTrackSeconds = 3f;
         [SerializeField, Min(0f)] private float investigateLingerSeconds = 3f;
 
+        [Header("Rôle")]
+        [Tooltip("Le prof reste dans la salle où a lieu le cours ; le surveillant fait le tour du lycée.")]
+        [SerializeField] private bool teachesTheClass;
+
         [Header("Look")]
         [SerializeField] private Renderer bodyRenderer;
 
@@ -46,6 +51,7 @@ namespace HoldMyBeer.Gameplay.Adults
         private MischiefBus _mischief;
         private IDayStateProvider _day;
         private ISchoolLayout _layout;
+        private SmokeField _smoke;
         private int _sightMask = ~0;
 
         private int _waypoint;
@@ -54,6 +60,9 @@ namespace HoldMyBeer.Gameplay.Adults
         private float _lastSeenAt;
         private float _lingerUntil;
         private SupervisorState _shownState = (SupervisorState)255;
+
+        /// <summary>How sharp the adults are this cycle. Capped by the progression table.</summary>
+        private float Vigilance => _day?.Current?.Tier != null ? _day.Current.Tier.VigilanceScale : 1f;
 
         private SupervisorState State
         {
@@ -85,6 +94,7 @@ namespace HoldMyBeer.Gameplay.Adults
             {
                 AppServices.Container.TryResolve(out _day);
                 AppServices.Container.TryResolve(out _layout);
+                AppServices.Container.TryResolve(out _smoke);
                 if (AppServices.Container.TryResolve(out _mischief))
                 {
                     _mischief.Reported += HandleMischief;
@@ -117,7 +127,8 @@ namespace HoldMyBeer.Gameplay.Adults
                 return;
             }
 
-            if (_day?.Current is not { Phase: DayPhase.Playing } day)
+            var current = _day?.Current;
+            if (current == null || !current.Phase.IsInPlay())
             {
                 // After the bell, adults go back to walking: nobody gets caught on
                 // the results screen.
@@ -135,21 +146,21 @@ namespace HoldMyBeer.Gameplay.Adults
             {
                 case SupervisorState.Patrol:
                     Patrol();
-                    LookForWanted(day);
+                    LookForSuspects(current);
                     break;
                 case SupervisorState.Investigate:
                     Investigate();
-                    LookForWanted(day);
+                    LookForSuspects(current);
                     break;
                 case SupervisorState.Chase:
-                    Chase(day);
+                    Chase(current);
                     break;
             }
         }
 
         private void Patrol()
         {
-            var route = _layout?.PatrolRoute;
+            var route = CurrentRoute();
             if (route is not { Length: > 0 })
             {
                 return;
@@ -160,6 +171,28 @@ namespace HoldMyBeer.Gameplay.Adults
             {
                 _waypoint = (_waypoint + 1) % route.Length;
             }
+        }
+
+        /// <summary>
+        /// A teacher walks the room being taught in; everyone else walks the school.
+        /// Two behaviours, one component: the difference is which markers it is given,
+        /// not a second brain to keep in sync with this one.
+        /// </summary>
+        private Transform[] CurrentRoute()
+        {
+            if (!teachesTheClass || _layout == null)
+            {
+                return _layout?.PatrolRoute;
+            }
+
+            var room = _day?.Current?.CurrentCourseRoom ?? RoomId.None;
+            if (room != RoomId.None && _layout.TryGetRoom(room, out var classroom) &&
+                classroom.TeacherRoute is { Length: > 0 })
+            {
+                return classroom.TeacherRoute;
+            }
+
+            return _layout.PatrolRoute;
         }
 
         private void Investigate()
@@ -212,6 +245,13 @@ namespace HoldMyBeer.Gameplay.Adults
             flat.y = 0f;
             if (flat.magnitude <= catchDistance && day is DayState concrete)
             {
+                // Caught with the loot: the theft is off, and the PC goes back to its
+                // room. Being seen carrying it is the risk the objective is made of.
+                if (TryGetLoot(_target, out var loot))
+                {
+                    loot.ReturnHome();
+                }
+
                 concrete.SendToDetention(_target);
                 _lingerUntil = 0f;
                 _goal = transform.position;
@@ -219,16 +259,28 @@ namespace HoldMyBeer.Gameplay.Adults
             }
         }
 
-        private void LookForWanted(IDayState day)
+        /// <summary>
+        /// Wanted for a prank, or simply in the corridor while a class is on: both are
+        /// reasons to be chased, and the second is what makes a class phase tense.
+        /// Someone already in detention is left alone.
+        /// </summary>
+        private void LookForSuspects(IDayState day)
         {
             foreach (var client in NetworkManager.ConnectedClientsList)
             {
-                if (client.PlayerObject == null || !day.IsWanted(client.ClientId))
+                if (client.PlayerObject == null || day.IsDetained(client.ClientId))
                 {
                     continue;
                 }
 
-                if (CanSee(client.PlayerObject.transform.position))
+                var position = client.PlayerObject.transform.position;
+                if (day is DayState concrete ? !concrete.IsSuspect(client.ClientId, position)
+                        : !day.IsWanted(client.ClientId))
+                {
+                    continue;
+                }
+
+                if (CanSee(position))
                 {
                     _target = client.ClientId;
                     _lastSeenAt = Time.time;
@@ -256,7 +308,20 @@ namespace HoldMyBeer.Gameplay.Adults
             }
 
             // A silent prank done in plain sight is still caught red-handed: the
-            // Wanted flag it raises is picked up by the next LookForWanted.
+            // Wanted flag it raises is picked up by the next LookForSuspects.
+        }
+
+        private bool TryGetLoot(ulong clientId, out LootItem loot)
+        {
+            loot = null;
+
+            if (!AppServices.IsReady || !AppServices.Container.TryResolve<IHeldItemTracker>(out var tracker) ||
+                !tracker.TryGetHeldItem(clientId, out var held) || held is not Component component)
+            {
+                return false;
+            }
+
+            return component.TryGetComponent(out loot);
         }
 
         private bool CanSee(Vector3 studentFeet)
@@ -266,7 +331,14 @@ namespace HoldMyBeer.Gameplay.Adults
             var toStudent = chest - eye;
             var distance = toStudent.magnitude;
 
-            if (distance > sightRange)
+            if (distance > sightRange * Vigilance)
+            {
+                return false;
+            }
+
+            // Smoke is the one thing that takes an adult's senses away, so it is asked
+            // here rather than baked into the ray: the particle system is decoration.
+            if (_smoke != null && _smoke.Blocks(eye, chest))
             {
                 return false;
             }
