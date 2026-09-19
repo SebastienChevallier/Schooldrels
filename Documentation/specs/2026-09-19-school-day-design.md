@@ -37,6 +37,10 @@ Arrivée          Pause          Cours 1          Dej            Cours 2        
 | `Dismissal` | 90 s | tout se referme, retour libre |
 | `Recap` | écran | bilan du jour, réput' par élève, progression vers le quota |
 
+Budget global : **une journée dure 15 à 20 min** (les durées ci-dessus sont le réglage
+« confort »), donc un cycle de trois jours 45 min à 1 h. Détail et plancher de chaque
+phase : `Documentation/design/day-budget.md`.
+
 Une phase est un **état serveur répliqué** : `DayPhase` devient cette machine à
 états, et son horloge (`_endsAt`) est déjà répliquée — c'est le même mécanisme,
 étendu. Les clients ne font que lire la phase et son temps restant.

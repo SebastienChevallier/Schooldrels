@@ -17,6 +17,10 @@ un sans relire le reste. La vue d'ensemble reste dans le spec :
 | Sortie | [`phases/06-sortie.md`](phases/06-sortie.md) | 90 s |
 | Récap | [`phases/07-recap.md`](phases/07-recap.md) | écran |
 
+**Une journée dure 15 à 20 min**, un cycle de trois jours 45 min à 1 h — le détail et
+les deux réglages sont dans [`day-budget.md`](day-budget.md). Les durées ci-dessus sont
+celles du réglage « confort ».
+
 ## Systèmes
 
 - [`courses/README.md`](courses/README.md) — le tirage des cours, ce qu'une matière apporte
@@ -24,6 +28,7 @@ un sans relire le reste. La vue d'ensemble reste dans le spec :
 - [`items.md`](items.md) — le catalogue d'objets : ce que chacun fait, ce qu'il rapporte, ce qu'il coûte au réseau
 - [`rooms-and-keys.md`](rooms-and-keys.md) — les salles, leurs portes, les clés
 - [`reputation-and-detention.md`](reputation-and-detention.md) — gagner de la réput', se faire prendre, la colle
+- [`day-budget.md`](day-budget.md) — combien de temps dure une journée, et ce qui est intouchable
 - [`progression.md`](progression.md) — cycles de trois jours, quotas, paliers de déblocage
 
 ## Comment lire ces docs

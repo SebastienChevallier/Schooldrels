@@ -86,6 +86,10 @@ s'ajoutera au-dessus de `ProgressionTier` sans le changer.
 
 ## Ouvert
 
-- Trois jours est-il le bon rythme ? À tester : trois jours × ~17 min = ~50 min de
-  partie par cycle, ce qui est long pour un premier essai. Peut-être raccourcir les
-  phases avant de toucher au nombre de jours.
+- **Réglé :** une journée dure 15 à 20 min, donc un cycle 45 min à 1 h. C'est
+  l'engagement d'une soirée, et c'est assumé — voir [`day-budget.md`](day-budget.md).
+  Si le rythme doit bouger, on règle les phases, pas le nombre de jours : c'est lui qui
+  donne au quota sa marge de rattrapage.
+- Faut-il pouvoir quitter proprement entre deux jours (le cycle continue sans le
+  joueur) ? Avec des cycles d'une heure, ça devient une vraie question — pas pour le
+  proto.
